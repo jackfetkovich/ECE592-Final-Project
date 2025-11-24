@@ -17,55 +17,57 @@
         <body name="SWIX" pos="0 0 5">
             <freejoint name="SWIX_freejoint"/>
             <!-- AUV Frame -->
-            <geom name="red_box" type="box" size=".2 .5 .2" rgba="1 0 0 1" pos="0 0 0" mass="100"/>
+            <geom name="red_box" type="box" size=".2 .4 .2" rgba="1 0 0 1" pos="0 0 0" mass="100"/>
 
             <!-- Vertical Thrusters -->
-            <geom name="thruster_1" type="cylinder" size=".1 .1" rgba="0 0 0 1" pos=".3 .25 0" mass=".1"/>
-            <site name="thrust1_site" pos=".3 .25 0"/>
-            <geom name="thruster_2" type="cylinder" size=".1 .1" rgba="0 0 0 1" pos=".3 -.25 0" mass=".1"/>
-            <site name="thrust2_site" pos=".3 -.25 0"/>
-            <geom name="thruster_3" type="cylinder" size=".1 .1" rgba="0 0 0 1" pos="-.3 .25 0" mass=".1"/>
-            <site name="thrust3_site" pos="-.3 .25 0"/>
-            <geom name="thruster_4" type="cylinder" size=".1 .1" rgba="0 0 0 1" pos="-.3 -.25 0" mass=".1"/>
-            <site name="thrust4_site" pos="-.3 -.25 0"/>
+            <geom name="thruster_3" type="cylinder" size=".1 .1" rgba="0 0 0 1" pos=".3 .2 0" mass=".1"/>
+            <site name="thrust3_site" pos=".2 .2 0"/>
+            <geom name="thruster_4" type="cylinder" size=".1 .1" rgba="0 0 0 1" pos=".3 -.2 0" mass=".1"/>
+            <site name="thrust4_site" pos=".2 -.2 0"/>
+            <geom name="thruster_7" type="cylinder" size=".1 .1" rgba="0 0 0 1" pos="-.3 .2 0" mass=".1"/>
+            <site name="thrust7_site" pos="-.2 .2 0"/>
+            <geom name="thruster_8" type="cylinder" size=".1 .1" rgba="0 0 0 1" pos="-.3 -.2 0" mass=".1"/>
+            <site name="thrust8_site" pos="-.2 -.2 0"/>
 
             <!-- Diagonal Thrusters -->
-            <body name="thruster_5" pos=".3 .5 0" euler="90 45 0">
+            <body name="thruster_1" pos=".3 .4 0" euler="90 45 0">
                 <geom type="cylinder" size=".1 .1" rgba="0 0 0 1" mass=".1"/>
-                <site name="thrust5_site"/>
             </body>
-            <body name="thruster_6" pos="-.3 .5 0" euler="90 -45 0">
+            <site name="thrust1_site" pos=".2 .4 0"/>
+
+            <body name="thruster_2" pos="-.3 .4 0" euler="90 135 0">
                 <geom type="cylinder" size=".1 .1" rgba="0 0 0 1" mass=".1"/>
-                <site name="thrust6_site"/>
             </body>
-            <body name="thruster_7" pos=".3 -.5 0" euler="90 -45 0">
+            <site name="thrust2_site" pos="-.2 .4 0"/>
+
+            <body name="thruster_5" pos=".3 -.4 0" euler="90 -45 0">
                 <geom type="cylinder" size=".1 .1" rgba="0 0 0 1" mass=".1"/>
-                <site name="thrust7_site"/>
-            </body>                
-            <body name="thruster_8" pos="-.3 -.5 0" euler="90 45 0">
-                <geom type="cylinder" size=".1 .1" rgba="0 0 0 1" mass=".1"/>
-                <site name="thrust8_site"/>
             </body>
+            <site name="thrust5_site" pos=".2 -.4 0"/>         
+                   
+            <body name="thruster_6" pos="-.3 -.4 0" euler="90 -135 0">
+                <geom type="cylinder" size=".1 .1" rgba="0 0 0 1" mass=".1"/>
+            </body>
+            <site name="thrust6_site" pos="-.2 -.4 0"/>
 
         </body>
 
     </worldbody>
 
     <actuator>
-
-        <!-- Need to change values based on thruster matrix and maybe change the joints to sites -->
+        <!-- Need to check dynamics and rotate to match Mujoco axes -->
 
         <!-- Vertical thrusters -->
-        <motor name="thrust1" joint="SWIX_freejoint" gear="0 0 500 0 0 0"/>
-        <motor name="thrust2" joint="SWIX_freejoint" gear="0 0 500 0 0 0"/>
-        <motor name="thrust3" joint="SWIX_freejoint" gear="0 0 500 0 0 0"/>
-        <motor name="thrust4" joint="SWIX_freejoint" gear="0 0 500 0 0 0"/>
-
+        <motor name="thrust3" site="thrust3_site" gear="0 0 -1  0 0 0" ctrlrange="-500 500"/>
+        <motor name="thrust4" site="thrust4_site" gear="0 0 -1  0 0 0" ctrlrange="-500 500"/>
+        <motor name="thrust7" site="thrust7_site" gear="0 0 -1 0 0 0" ctrlrange="-500 500"/>
+        <motor name="thrust8" site="thrust8_site" gear="0 0 -1 0 0 0" ctrlrange="-500 500"/>
         <!-- Diagonal thrusters -->
-        <motor name="thrust5" joint="SWIX_freejoint" gear="353 353 0 0 0 5"/>
-        <motor name="thrust6" joint="SWIX_freejoint" gear="-353 353 0 0 0 -5"/>
-        <motor name="thrust7" joint="SWIX_freejoint" gear="353 -353 0 0 0 -5"/>
-        <motor name="thrust8" joint="SWIX_freejoint" gear="-353 -353 0 0 0 5"/>
+        <motor name="thrust1" site="thrust1_site" gear=".4473 .8944 0 0 0 0" ctrlrange="-500 500"/>
+        <motor name="thrust2" site="thrust2_site" gear="-.4473 .8944 0 0 0 0" ctrlrange="-500 500"/>
+        <motor name="thrust5" site="thrust5_site" gear=".4473 .8944 0 0 0 0" ctrlrange="-500 500"/>
+        <motor name="thrust6" site="thrust6_site" gear="-.4473 .8944 0 0 0 0" ctrlrange="-500 500"/>
+
     </actuator>
 
 
