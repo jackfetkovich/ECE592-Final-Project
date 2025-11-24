@@ -58,15 +58,20 @@
         <!-- Need to check dynamics and rotate to match Mujoco axes -->
 
         <!-- Vertical thrusters -->
+
+        <motor name="thrust1" site="thrust1_site" gear=".4473 -.8944 0 0 0 0" ctrlrange="-500 500"/>
+        <motor name="thrust2" site="thrust2_site" gear="-.4473 -.8944 0 0 0 0" ctrlrange="-500 500"/>
+
         <motor name="thrust3" site="thrust3_site" gear="0 0 -1  0 0 0" ctrlrange="-500 500"/>
         <motor name="thrust4" site="thrust4_site" gear="0 0 -1  0 0 0" ctrlrange="-500 500"/>
-        <motor name="thrust7" site="thrust7_site" gear="0 0 -1 0 0 0" ctrlrange="-500 500"/>
-        <motor name="thrust8" site="thrust8_site" gear="0 0 -1 0 0 0" ctrlrange="-500 500"/>
+
         <!-- Diagonal thrusters -->
-        <motor name="thrust1" site="thrust1_site" gear=".4473 .8944 0 0 0 0" ctrlrange="-500 500"/>
-        <motor name="thrust2" site="thrust2_site" gear="-.4473 .8944 0 0 0 0" ctrlrange="-500 500"/>
+   
         <motor name="thrust5" site="thrust5_site" gear=".4473 .8944 0 0 0 0" ctrlrange="-500 500"/>
         <motor name="thrust6" site="thrust6_site" gear="-.4473 .8944 0 0 0 0" ctrlrange="-500 500"/>
+
+        <motor name="thrust7" site="thrust7_site" gear="0 0 -1 0 0 0" ctrlrange="-500 500"/>
+        <motor name="thrust8" site="thrust8_site" gear="0 0 -1 0 0 0" ctrlrange="-500 500"/>
 
     </actuator>
 
