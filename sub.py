@@ -37,15 +37,25 @@ class Sub:
             tau ((6, ) numpy array): _description_
         """
         
-        v_dot = np.linalg.inv(self.Mrb + self.Ma) @ (tau - self.g(self.eta) - (self.Crb(v)@v + self.Ca(v)@v + self.D(v)@v))
+        v_dot = np.linalg.inv(self.Mrb + self.Ma) @ (tau - self.g(eta) - (self.Crb(v)@v + self.Ca(v)@v + self.D(v)@v))
         print(f"vdot: {v_dot}")
         v = v + v_dot * dt
         print(f"v: {v}")
-        eta_dot = self.J(v) @ eta
+        eta_dot = self.J(eta) @ v
         print(f"eta_dot: {eta_dot}")
         return eta + eta_dot * dt
 
     def r_b_to_n(self, phi, theta, psi):
+        """ Transformation matrix from robot body frame to world frame
+
+        Args:
+            phi (float): Rotation about x
+            theta (float): Rotation about y
+            psi (float): Rotation about z
+
+        Returns:
+            3x3 Rotation Matrix
+        """
         return np.array([
             [c(psi)*c(theta), -s(psi)*c(phi) + c(psi)*s(theta)*s(phi), s(psi)*s(phi)+c(psi)*c(phi)*s(theta) ],
             [s(psi)*c(theta), c(psi)*c(phi) + s(phi)*s(theta)*s(psi), -c(psi)*s(phi)+s(theta)*s(psi)*c(phi)],

@@ -56,16 +56,16 @@
         <!-- Need to change values based on thruster matrix and maybe change the joints to sites -->
 
         <!-- Vertical thrusters -->
-        <motor name="thrust1" joint="SWIX_freejoint" gear="0 0 500 0 0 0"/>
-        <motor name="thrust2" joint="SWIX_freejoint" gear="0 0 500 0 0 0"/>
-        <motor name="thrust3" joint="SWIX_freejoint" gear="0 0 500 0 0 0"/>
-        <motor name="thrust4" joint="SWIX_freejoint" gear="0 0 500 0 0 0"/>
+        <motor name="thrust1" joint="SWIX_freejoint" gear="0 0 1 0 0 0"/>
+        <motor name="thrust2" joint="SWIX_freejoint" gear="0 0 1 0 0 0"/>
+        <motor name="thrust3" joint="SWIX_freejoint" gear="0 0 1 0 0 0"/>
+        <motor name="thrust4" joint="SWIX_freejoint" gear="0 0 1 0 0 0"/>
 
         <!-- Diagonal thrusters -->
-        <motor name="thrust5" joint="SWIX_freejoint" gear="353 353 0 0 0 5"/>
-        <motor name="thrust6" joint="SWIX_freejoint" gear="-353 353 0 0 0 -5"/>
-        <motor name="thrust7" joint="SWIX_freejoint" gear="353 -353 0 0 0 -5"/>
-        <motor name="thrust8" joint="SWIX_freejoint" gear="-353 -353 0 0 0 5"/>
+        <motor name="thrust5" joint="SWIX_freejoint" gear="0 0 0 0 0 1"/>
+        <motor name="thrust6" joint="SWIX_freejoint" gear="0 0 0 0 0 -1"/>
+        <motor name="thrust7" joint="SWIX_freejoint" gear="0 0 0 0 0 -1"/>
+        <motor name="thrust8" joint="SWIX_freejoint" gear="0 0 0 0 0 1"/>
     </actuator>
 
 
