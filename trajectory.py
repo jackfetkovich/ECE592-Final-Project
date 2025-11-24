@@ -18,7 +18,7 @@ class Trajectory:
         if np.any(mask):
             smallest_idx = np.argmax(mask) # Find the first waypoint with larger time than requested
             if smallest_idx == 0:
-                return self.waypoints[0, 0:3] # Return first waypoint
+                return self.waypoints[0, 0:6] # Return first waypoint
 
             return lin_interpolate(
                 self.waypoints[smallest_idx - 1, 0:6],  # previous
