@@ -4,6 +4,7 @@ from numpy import sin as s
 from numpy import tan as t
 from numba import int64, float64, boolean
 from numba.experimental import jitclass
+from transform import *
 
 spec = []
 
@@ -18,8 +19,9 @@ spec = []
 """
 
 class Sub:
-    def __init__(self, eta, v, Mrb, Crb, Ma, Ca, D, g):
-        self.eta = eta # set initial state
+    def __init__(self, eta_0, eta_dot_0, v, Mrb, Crb, Ma, Ca, D, g):
+        self.eta = eta_0 # set initial configuration
+        self.x = np.array([eta_0, eta_dot_0])
         self.v = v
         self.Mrb = Mrb
         self.Crb = Crb
@@ -27,7 +29,7 @@ class Sub:
         self.Ca = Ca
         self.D = D
         self.g = g
-        self.eta = eta
+        
 
     def forward_dynamics(self, eta, v, tau, dt):
         """_summary_
@@ -38,12 +40,15 @@ class Sub:
         """
         
         v_dot = np.linalg.inv(self.Mrb + self.Ma) @ (tau - self.g(eta) - (self.Crb(v)@v + self.Ca(v)@v + self.D(v)@v))
-        print(f"vdot: {v_dot}")
         v = v + v_dot * dt
-        print(f"v: {v}")
         eta_dot = self.J(eta) @ v
-        print(f"eta_dot: {eta_dot}")
-        return eta + eta_dot * dt
+        return np.array([eta + eta_dot * dt, eta_dot])
+    
+    def set_state(self, x):
+        self.x = x
+        self.eta = x[:6],
+        self.eta_dot = x[6:]
+        self.v = 
 
     def r_b_to_n(self, phi, theta, psi):
         """ Transformation matrix from robot body frame to world frame
