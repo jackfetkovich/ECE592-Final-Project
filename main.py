@@ -60,11 +60,14 @@ print(x_new)
 with mujoco.viewer.launch_passive(model, data) as viewer:
     dt = model.opt.timestep
     while viewer.is_running():
-        # data.ctrl[0] = 985
-        # data.ctrl[1] = 0
-        # data.ctrl[2] = 0
-        # data.ctrl[3] = 0
-        # data.ctrl[4] = 0
+        data.ctrl[0] = 500
+        data.ctrl[1] = 500
+        data.ctrl[2] = 0
+        data.ctrl[3] = 0
+        data.ctrl[4] = 0
+        data.ctrl[5] = 0
+        data.ctrl[6] = 0
+        data.ctrl[7] = 0
         mujoco.mj_step(model, data)
         viewer.sync()
         time.sleep(dt)
