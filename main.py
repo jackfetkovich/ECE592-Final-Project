@@ -4,6 +4,7 @@ import time
 import numpy as np
 import os
 from sub import Sub
+from telemetry import Telemetry
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 xml_path = os.path.join(BASE_DIR, "project.xml")
@@ -50,7 +51,13 @@ def init_swix():
         0
     ])
 
-    return Sub(eta, v, Mrb, Crb, Ma, Ca, D, g)
+    def iface(thrusts):
+        for i, thrust in enumerate(thrusts):
+            data.ctrl[i] = thrust
+
+    telemetry = Telemetry(data)
+
+    return Sub(eta, v, Mrb, Crb, Ma, Ca, D, g, iface, telemetry)
 
 sub = init_swix()
 
@@ -60,11 +67,16 @@ print(x_new)
 with mujoco.viewer.launch_passive(model, data) as viewer:
     dt = model.opt.timestep
     while viewer.is_running():
-        # data.ctrl[0] = 985
-        # data.ctrl[1] = 0
+        # data.ctrl[0] = 500
+        # data.ctrl[1] = 500
         # data.ctrl[2] = 0
         # data.ctrl[3] = 0
-        # data.ctrl[4] = 0
+        # data.ctrl[4] = 500
+        # data.ctrl[5] = 500
+        # data.ctrl[6] = 0
+        # data.ctrl[7] = 0
+        sub.control([1,0,0,0,0,0])
+        print(data.sensordata[6])
         mujoco.mj_step(model, data)
         viewer.sync()
         time.sleep(dt)

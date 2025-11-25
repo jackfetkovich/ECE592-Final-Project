@@ -4,6 +4,8 @@ from numpy import sin as s
 from numpy import tan as t
 from numba import int64, float64, boolean
 from numba.experimental import jitclass
+from transform import *
+from telemetry import Telemetry
 
 spec = []
 
@@ -18,16 +20,29 @@ spec = []
 """
 
 class Sub:
-    def __init__(self, eta, v, Mrb, Crb, Ma, Ca, D, g):
-        self.eta = eta # set initial state
-        self.v = v
+    def __init__(self, eta0, v0, Mrb, Crb, Ma, Ca, D, g, ctrl_iface, telemetry):
+        self.eta = eta0 # set initial state
+        self.eta_dot = self.J(eta0) @ v0
+        self.x = np.array([self.eta, self.eta_dot])
+        self.v = v0
         self.Mrb = Mrb
         self.Crb = Crb
         self.Ma = Ma
         self.Ca = Ca
         self.D = D
         self.g = g
-        self.eta = eta
+        self.ctrl_iface = ctrl_iface
+        self.telemetry = telemetry
+        self.allocation_matrix = np.array([
+            [100,100,100,100,100,100],
+            [1,1,1,1,1,1],
+            [1,1,1,1,1,1],
+            [1,1,1,1,1,1],
+            [1,1,1,1,1,1],
+            [1,1,1,1,1,1],
+            [1,1,1,1,1,1]
+        ])
+        
 
     def forward_dynamics(self, eta, v, tau, dt):
         """_summary_
@@ -73,7 +88,7 @@ class Sub:
         phi = eta[3]
         theta = eta[4]
         psi = eta[5]
-        rbn = self.r_b_to_n(phi, theta, psi)
+        rbn = np.array([[0, 1, 0], [1, 0, 0], [0, 0, -1]]) @ self.r_b_to_n(phi, theta, psi) # Convert to z up, rotate to accomodate y being the forward axis
         T = self.omega_to_world(phi, theta, psi)
         zeros = np.zeros((3,3))
         
@@ -81,6 +96,11 @@ class Sub:
             [rbn, zeros],
             [zeros, T]
         ])
+    
+    def control(self, tau):
+        thrusts = self.allocation_matrix @ tau
+        self.ctrl_iface(thrusts)
+
 
 
 

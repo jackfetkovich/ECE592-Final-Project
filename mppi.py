@@ -25,7 +25,6 @@ def mppi(sub, traj, time, params):
     costs = np.zeros(params.K) # initialize all costs
     last_u = np.zeros(2)
     for k in range(params.K):
-        path_safe = True
         for t in range(len(targets)-1):
             u_nom = U[k,t]
             u_safe = u_nom
