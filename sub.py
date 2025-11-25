@@ -27,7 +27,6 @@ class Sub:
         self.Ca = Ca
         self.D = D
         self.g = g
-        self.eta = eta
 
     def forward_dynamics(self, eta, v, tau, dt):
         """_summary_
@@ -73,7 +72,7 @@ class Sub:
         phi = eta[3]
         theta = eta[4]
         psi = eta[5]
-        rbn = self.r_b_to_n(phi, theta, psi)
+        rbn = np.array([[0, 1, 0], [1, 0, 0], [0, 0, -1]]) @ self.r_b_to_n(phi, theta, psi) # Convert to z up
         T = self.omega_to_world(phi, theta, psi)
         zeros = np.zeros((3,3))
         
