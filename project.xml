@@ -48,7 +48,7 @@
             <body name="thruster_5" pos="-.3 -.4 0" euler="90 -135 0">
                 <geom type="cylinder" size=".1 .1" rgba="0 0 0 1" mass=".1"/>
             </body>
-            <site name="thrust5site" pos="-.2 -.4 0"/>
+            <site name="thrust5_site" pos="-.2 -.4 0"/>
 
         </body>
 
