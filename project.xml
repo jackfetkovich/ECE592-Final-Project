@@ -30,15 +30,15 @@
             <site name="thrust7_site" pos="-.2 -.2 0"/>
 
             <!-- Diagonal Thrusters -->
-            <body name="thruster_0" pos=".3 .4 0" euler="90 45 0">
+            <body name="thruster_0" pos="-.3 .4 0" euler="90 45 0">
                 <geom type="cylinder" size=".1 .1" rgba="0 0 0 1" mass=".1"/>
             </body>
-            <site name="thrust0_site" pos=".2 .4 0"/>
+            <site name="thrust0_site" pos="-.2 .4 0"/>
 
-            <body name="thruster_1" pos="-.3 .4 0" euler="90 135 0">
+            <body name="thruster_1" pos=".3 .4 0" euler="90 135 0">
                 <geom type="cylinder" size=".1 .1" rgba="0 0 0 1" mass=".1"/>
             </body>
-            <site name="thrust1_site" pos="-.2 .4 0"/>
+            <site name="thrust1_site" pos=".2 .4 0"/>
 
             <body name="thruster_4" pos=".3 -.4 0" euler="90 -45 0">
                 <geom type="cylinder" size=".1 .1" rgba="0 0 0 1" mass=".1"/>
@@ -56,8 +56,8 @@
 
     <actuator>
         <!-- Front Diagonal Thrusters -->
-        <motor name="thrust0" site="thrust0_site" gear=".4473 -.8944 0 0 0 0" ctrlrange="-500 500"/>
-        <motor name="thrust1" site="thrust1_site" gear="-.4473 -.8944 0 0 0 0" ctrlrange="-500 500"/>
+        <motor name="thrust0" site="thrust0_site" gear=".4473 .8944 0 0 0 0" ctrlrange="-500 500"/>
+        <motor name="thrust1" site="thrust1_site" gear="-.4473 .8944 0 0 0 0" ctrlrange="-500 500"/>
 
         <!-- Right Vertical Thrusters -->
         <motor name="thrust2" site="thrust2_site" gear="0 0 -1  0 0 0" ctrlrange="-500 500"/>
