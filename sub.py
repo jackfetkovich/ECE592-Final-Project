@@ -5,6 +5,7 @@ from numpy import tan as t
 from numba import int64, float64, boolean
 from numba.experimental import jitclass
 from transform import *
+from telemetry import Telemetry
 
 spec = []
 
@@ -19,9 +20,11 @@ spec = []
 """
 
 class Sub:
-    def __init__(self, eta, v, Mrb, Crb, Ma, Ca, D, g, ctrl_iface):
-        self.eta = eta # set initial state
-        self.v = v
+    def __init__(self, eta0, v0, Mrb, Crb, Ma, Ca, D, g, ctrl_iface, telemetry):
+        self.eta = eta0 # set initial state
+        self.eta_dot = self.J(eta0) @ v0
+        self.x = np.array([self.eta, self.eta_dot])
+        self.v = v0
         self.Mrb = Mrb
         self.Crb = Crb
         self.Ma = Ma
@@ -29,6 +32,7 @@ class Sub:
         self.D = D
         self.g = g
         self.ctrl_iface = ctrl_iface
+        self.telemetry = telemetry
         self.allocation_matrix = np.array([
             [100,100,100,100,100,100],
             [1,1,1,1,1,1],
@@ -37,7 +41,6 @@ class Sub:
             [1,1,1,1,1,1],
             [1,1,1,1,1,1],
             [1,1,1,1,1,1]
-
         ])
         
 

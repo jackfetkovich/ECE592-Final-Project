@@ -15,6 +15,7 @@
         <light name="top" pos="0 0 10"/>
         <geom size="10 10 .01" type="plane" material="grid"/>
         <body name="SWIX" pos="0 0 5">
+            <site name="imu" pos="0 0 0"/>
             <freejoint name="SWIX_freejoint"/>
             <!-- AUV Frame -->
             <geom name="red_box" type="box" size=".2 .4 .2" rgba="1 0 0 1" pos="0 0 0" mass="100"/>
@@ -72,6 +73,12 @@
         <motor name="thrust7" site="thrust7_site" gear="0 0 -1 0 0 0" ctrlrange="-500 500"/>
 
     </actuator>
+
+    <sensor>
+        <framepos name="body_pos" objtype="site" objname="imu"/>
+        <framelinvel name="body_linvel" objtype="site" objname="imu"/>
+        <frameangvel name="body_angvel" objtype="site" objname="imu"/>
+   </sensor>
 
 
 </mujoco>
