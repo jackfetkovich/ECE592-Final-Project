@@ -64,8 +64,8 @@ with mujoco.viewer.launch_passive(model, data) as viewer:
         data.ctrl[1] = 500
         data.ctrl[2] = 0
         data.ctrl[3] = 0
-        data.ctrl[4] = 0
-        data.ctrl[5] = 0
+        data.ctrl[4] = 500
+        data.ctrl[5] = 500
         data.ctrl[6] = 0
         data.ctrl[7] = 0
         mujoco.mj_step(model, data)
