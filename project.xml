@@ -86,6 +86,7 @@
 
     <sensor>
         <framepos name="body_pos" objtype="site" objname="imu"/>
+        <framequat name="body_orientation" objtype="site" objname="imu"/>
         <framelinvel name="body_linvel" objtype="site" objname="imu"/>
         <frameangvel name="body_angvel" objtype="site" objname="imu"/>
    </sensor>

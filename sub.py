@@ -101,6 +101,12 @@ class Sub:
         thrusts = self.allocation_matrix @ tau
         self.ctrl_iface(thrusts)
 
+    def print_telemetry(self):
+        pos = self.telemetry.pos()
+        rot = self.telemetry.rot()
+        print("******************************")
+        print(f"Pos: ({pos[0]}, {pos[1]}, {pos[2]})")
+        print(f"Rot: ({rot[0]}, {rot[1]}, {rot[2]})")
 
 
 
