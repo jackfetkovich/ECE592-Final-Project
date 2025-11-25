@@ -16,10 +16,10 @@ mujoco.mj_resetData(model, data)
 
 def init_swix():
     # Initialize submarine
-    m = 1
-    Ix = 10
-    Iy = 10
-    Iz = 10
+    m = 22.0
+    Ix = 1/12 * m * (0.4**2 + 0.4**2) 
+    Iy = 1/12 * m * (0.4**2 + 0.8**2)
+    Iz = 1/12 * m * (0.8**2 + 0.4**2)
 
     grav = 9.81
     vol = 0.178
@@ -63,7 +63,7 @@ sub = init_swix()
 
 # x_new = sub.forward_dynamics(sub.eta, sub.v, np.array([100, 1000, 0, 0, 0, 0]), 4)
 # print(x_new)
-sub.control([0,0,0,0,0,10000])
+
 with mujoco.viewer.launch_passive(model, data) as viewer:
     dt = model.opt.timestep
     while viewer.is_running():
@@ -75,8 +75,8 @@ with mujoco.viewer.launch_passive(model, data) as viewer:
         # data.ctrl[5] = 0
         # data.ctrl[6] = 250
         # data.ctrl[7] = 250
-        
-        # sub.print_telemetry()
+        sub.control([100,0,0,0,0,0])
+        sub.print_telemetry()
         mujoco.mj_step(model, data)
         viewer.sync()
         time.sleep(dt)

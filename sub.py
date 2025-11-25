@@ -103,9 +103,11 @@ class Sub:
     def print_telemetry(self):
         pos = self.telemetry.pos()
         rot = self.telemetry.rot()
+        vel = self.telemetry.vel()
         print("******************************")
         print(f"Pos: ({pos[0]}, {pos[1]}, {pos[2]})")
         print(f"Rot: ({rot[0]}, {rot[1]}, {rot[2]})")
+        print(f"Vel: ({vel[0]}, {vel[1]}, {vel[2]})")
 
 
 
