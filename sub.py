@@ -33,14 +33,13 @@ class Sub:
         self.g = g
         self.ctrl_iface = ctrl_iface
         self.telemetry = telemetry
-        self.allocation_matrix = np.array([
-            [100,100,100,100,100,100],
-            [1,1,1,1,1,1],
-            [1,1,1,1,1,1],
-            [1,1,1,1,1,1],
-            [1,1,1,1,1,1],
-            [1,1,1,1,1,1],
-            [1,1,1,1,1,1]
+        self.allocation_matrix = -np.array([
+            [-0.4472, -0.4472, 0, 0, -0.4472, -0.4472, 0, 0],
+            [0.8944, -0.8944, 0, 0, 0.8944, -0.8944, 0, 0],
+            [0, 0, 1, 1, 0, 0, 1, 1],
+            [0, 0, -0.2828, -0.2828, 0, 0, 0.2828, 0.2828],
+            [0, 0, 0.2828, -0.2828, 0, 0, -0.2828, 0.2828],
+            [0.4472, -0.4472, 0, 0, -0.4472, 0.4472, 0, 0]
         ])
         
 
@@ -98,7 +97,7 @@ class Sub:
         ])
     
     def control(self, tau):
-        thrusts = self.allocation_matrix @ tau
+        thrusts = np.linalg.pinv(self.allocation_matrix) @ tau
         self.ctrl_iface(thrusts)
 
     def print_telemetry(self):

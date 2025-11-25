@@ -18,7 +18,7 @@
             <site name="imu" pos="0 0 0"/>
             <freejoint name="SWIX_freejoint"/>
             <!-- AUV Frame -->
-            <geom name="red_box" type="box" size=".4 .2 .2" rgba="1 0 0 1" pos="0 0 0" mass="100"/>
+            <geom name="red_box" type="box" size=".4 .2 .2" rgba="1 0 0 0.3" pos="0 0 0" mass="100"/>
 
             <!-- Vertical Thrusters -->
             <body name="thruster_2" pos=".2 -.3 0">
