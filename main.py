@@ -49,14 +49,15 @@ sub = Sub(eta, v, iface, telemetry, params)
 
 waypoints = np.array([
     [0.0,0.0,5.0,0.0,0.0,0.0, 0.0],
-    [3.0,0.0,8.0,0.0,0.0,0.0, 4.0],
-    [7.0,4.0,8.0,0.0,0.0,0.0, 8.0],
-    [4.0,-2.0,5.0,0.0,0.0,0.0, 12.0]
+    [0.0,0.0,8.0,0.0,0.0,0.0, 4.0],
+    [0.0,0.0,8.0,0.0,0.0,0.0, 8.0],
+    [0.0,0.0,5.0,0.0,0.0,0.0, 12.0]
 ])
 
 traj = Trajectory(waypoints)
 
 def warmup():
+    print("Warming up...")
     mppi(np.concat([eta, np.zeros(6)]), traj, 0.15, 1000, 12, 1, 0.1, m, Ix, Iy, Iz, W, B, params)
 
 warmup()
@@ -67,6 +68,7 @@ t = []
 goal_states = []
 true_states = []
 plotting_started = True
+sim_time = 0
 
 ctrl = np.zeros(6)
 count = 0
@@ -78,28 +80,30 @@ with mujoco.viewer.launch_passive(model, data) as viewer:
         now = time.perf_counter()
         print(now-start)
         if count % 100 == 0:
-            ctrl = mppi(sub.telemetry.x(), traj, now-start, 1800, 20, 1, 0.01, m, Ix, Iy, Iz, W, B, params)
+            ctrl = mppi(sub.telemetry.x(), traj, sim_time, 2500, 20, 1, 0.01, m, Ix, Iy, Iz, W, B, params)
         # Apply controller input
         sub.control(ctrl)
         mujoco.mj_step(model, data)
 
-        goal_state = traj.sample_trajectory(now-start)
+        goal_state = traj.sample_trajectory(sim_time)
         # Save predicted and true measurements
         goal_states.append(goal_state)
         true_state = np.concatenate([sub.telemetry.pos(), sub.telemetry.rot()]).tolist()
         true_states.append(true_state)
-        t.append(now-start)
+        t.append(sim_time)
 
         viewer.sync()
         
-        if now - start > 30:
+        if now - start > 60:
             break
         count +=1 
+        sim_time += dt
         time.sleep(dt)
 
     
 predicted_states = np.array(goal_states)
 true_states = np.array(true_states)
+print(sim_time)
 
 plt.subplot(231)
 plt.plot(t, predicted_states[:, 0], label="Predicted")

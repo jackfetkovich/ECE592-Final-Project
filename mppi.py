@@ -7,8 +7,8 @@ from dynamics import *
 
 @njit
 def mppi(x_init, traj, time, K, T, lam, dt, m, Ix, Iy, Iz, W, B, params):
-    means = np.array([0, 0, 1000, 0, 0, 0])
-    sigmas = np.array([600, 600, 300, 25, 25, 25])
+    means = np.array([0, 0, 1200, 0, 0, 0])
+    sigmas = np.array([600, 600, 600, 25, 25, 25])
     X_calc = np.zeros((K, T + 1, 12))
 
     U = gen_normal_control_seq(means, sigmas, K, T)
