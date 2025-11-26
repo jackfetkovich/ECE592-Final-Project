@@ -67,10 +67,10 @@ def init_swix():
     return Sub(eta, v, Mrb, Crb, Ma, Ca, D, g, iface, telemetry)
 
 waypoints = np.array([
-    [0,0,5,0,0,0, 0],
-    [3,0,8,0,0,0, 4],
-    [7,4,8,0,0,0, 8],
-    [4,-2,5,0,0,0, 12]
+    [0.0,0.0,5.0,0.0,0.0,0.0, 0.0],
+    [3.0,0.0,8.0,0.0,0.0,0.0, 4.0],
+    [7.0,4.0,8.0,0.0,0.0,0.0, 8.0],
+    [4.0,-2.0,5.0,0.0,0.0,0.0, 12.0]
 ])
 
 traj = Trajectory(waypoints)
@@ -92,7 +92,7 @@ with mujoco.viewer.launch_passive(model, data) as viewer:
         now = time.perf_counter()
         print(now-start)
         if count % 1000 == 0:
-            ctrl = mppi(sub, traj, now-start, 2000, 25, 1, 0.01)
+            ctrl = mppi_wrapper(sub, traj, now-start, 2000, 25, 1, 0.01)
         # Apply controller input
         sub.control(ctrl)
         mujoco.mj_step(model, data)

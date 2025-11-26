@@ -10,14 +10,6 @@ from telemetry import Telemetry
 spec = []
 
 
-"""
- All parameters needed to define sub
-    - X (x, y, z, phi, theta, psi, u, v, w, p, q, r) initial
-    - Mass matrix
-    - Thruster allocation matrix
-    - 
-
-"""
 
 class Sub:
     def __init__(self, eta0, v0, Mrb, Crb, Ma, Ca, D, g, ctrl_iface, telemetry):
