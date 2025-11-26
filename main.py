@@ -21,13 +21,29 @@ mujoco.mj_resetData(model, data)
 
 
 
+# Initialize submarine
+m = 22.0
+Ix = 1/12 * m * (0.4**2 + 0.4**2) 
+Iy = 1/12 * m * (0.4**2 + 0.8**2)
+Iz = 1/12 * m * (0.8**2 + 0.4**2)
+
+grav = 9.81
+vol = 0.178
+rho = 1000
+
+W = m*grav
+B = rho * grav * vol
+
+eta = np.array([0, 0, 5, 0, 0, 0])
+v = np.zeros(6)
+Mrb = np.diag([m, m, m, Ix, Iy, Iz])
 
 def iface(thrusts):
     for i, thrust in enumerate(thrusts):
         data.ctrl[i] = thrust
 
 telemetry = Telemetry(data, model)
-params = SubParams(Mrb, Crb, Ma, Ca, D, g)
+params = SubParams(Mrb, Ma)
 
 sub = Sub(eta, v, iface, telemetry, params)
 
@@ -57,7 +73,7 @@ with mujoco.viewer.launch_passive(model, data) as viewer:
         now = time.perf_counter()
         print(now-start)
         if count % 1000 == 0:
-            ctrl = mppi_wrapper(sub, traj, now-start, 2000, 25, 1, 0.01)
+            ctrl = mppi(sub.telemetry.x(), traj, now-start, 2000, 25, 1, 0.01, m, Ix, Iy, Iz, W, B, params)
         # Apply controller input
         sub.control(ctrl)
         mujoco.mj_step(model, data)

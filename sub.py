@@ -3,29 +3,29 @@ from numpy import cos as c
 from numpy import sin as s
 from numpy import tan as t
 from numba import int64, float64, boolean
+from numba import types
 from numba.experimental import jitclass
 from numba import njit
 from transform import *
 from telemetry import Telemetry
+from dynamics import *
 
 
+spec = [
+    ("Mrb", float64[:,:]),
+    ("Ma", float64[:,:]),
+]
 
-spec = []
 @jitclass(spec)
 class SubParams:
-    def __init__(self, Mrb, Crb, Ma, Ca, D, g):
+    def __init__(self, Mrb, Ma):
         self.Mrb = Mrb
-        self.Crb = Crb
         self.Ma = Ma
-        self.Ca = Ca
-        self.D = D
-        self.g = g
-
 
 class Sub:
     def __init__(self, eta0, v0, ctrl_iface, telemetry, params):
         self.eta = eta0 # set initial state
-        self.eta_dot = self.J(eta0) @ v0
+        self.eta_dot = J(eta0) @ v0
         self.x = np.array([self.eta, self.eta_dot])
         self.v = v0
         self.ctrl_iface = ctrl_iface

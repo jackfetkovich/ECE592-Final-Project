@@ -6,25 +6,9 @@ from numba import int64, float64, boolean
 from numba import njit
 from transform import *
 
-# Initialize submarine
-m = 22.0
-Ix = 1/12 * m * (0.4**2 + 0.4**2) 
-Iy = 1/12 * m * (0.4**2 + 0.8**2)
-Iz = 1/12 * m * (0.8**2 + 0.4**2)
 
-grav = 9.81
-vol = 0.178
-rho = 1000
-
-W = m*grav
-B = rho * grav * vol
-
-eta = np.array([0, 0, 5, 0, 0, 0])
-v = np.zeros(6)
-Mrb = np.diag([m, m, m, Ix, Iy, Iz])
-
-@njit("float64(float64[:,:])")
-def Crb(v): 
+@njit("float64[:,:](float64[:], float64, float64, float64, float64)")
+def Crb(v, m, Ix, Iy, Iz): 
     return np.array([
         [0, 0, 0, 0, v[2], 0],
         [0, 0, 0, -m * v[2], 0, 0],
@@ -36,16 +20,16 @@ def Crb(v):
 
 Ma = np.zeros((6,6))
 
-@njit("float64(float64[:,:])")
+@njit("float64[:,:](float64[:])")
 def Ca(v):
     return np.zeros((6,6))
 
-@njit("float64(float64[:,:])")
+@njit("float64[:,:](float64[:])")
 def D(v): 
     return np.zeros((6,6))
 
-@njit("float64[:](float64[:])")
-def g(eta): 
+@njit("float64[:](float64[:], float64, float64)")
+def g(eta, W, B): 
     return np.array([
         (W-B)*np.sin(eta[4]),
         -(W-B)*np.cos(eta[4])*np.sin(eta[3]),
@@ -56,8 +40,8 @@ def g(eta):
     ])
 
 @njit
-def forward_dynamics(eta, v, tau, dt, Mrb, Ma, g, Crb, Ca, D):
-    v_dot = np.linalg.inv(Mrb + Ma) @ (tau - g(eta) - (Crb(v)@v + Ca(v)@v + D(v)@v))
+def forward_dynamics(eta, v, tau, dt, m, Ix, Iy, Iz, W, B, params):
+    v_dot = np.linalg.inv(params.Mrb + params.Ma) @ (tau - g(eta, W, B) - (Crb(v, m, Ix, Iy, Iz)@v + Ca(v)@v + D(v)@v))
     v = v + v_dot * dt
     eta_dot = J(eta) @ v
     eta_next = eta[0:6] + eta_dot * dt
