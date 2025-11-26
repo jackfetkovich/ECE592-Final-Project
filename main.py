@@ -69,29 +69,32 @@ predicted_state = sub.eta
 t = []
 predicted_states = []
 true_states = []
+plotting_started = False
 
 start = time.perf_counter()
 with mujoco.viewer.launch_passive(model, data) as viewer:
     dt = model.opt.timestep
     while viewer.is_running():
+        now = time.perf_counter()
         # Apply controller input
-        sub.control([200,0,0,0,0,0])
+        sub.control([200,200,0,300,400,100])
         mujoco.mj_step(model, data)
 
-        # Predict based on controller input
-        predicted_state = sub.forward_dynamics(predicted_state, sub.v, np.array([200,0,0,0,0,0]), dt)
-        print(sub.v)
-
-
-        # Save predicted and true measurements
-        predicted_states.append(predicted_state)
-        true_state = np.concatenate([sub.telemetry.pos(), sub.telemetry.rot()]).tolist()
-        true_states.append(true_state)
+        if now - start > 5 and not plotting_started:
+            predicted_state = np.concatenate([sub.telemetry.pos(), sub.telemetry.rot()]).tolist()
+            plotting_started = True
+        
+        if plotting_started:
+            predicted_state = sub.forward_dynamics(predicted_state, sub.v, np.array([200,200,0,300,400,100]), dt)
+            # Save predicted and true measurements
+            predicted_states.append(predicted_state)
+            true_state = np.concatenate([sub.telemetry.pos(), sub.telemetry.rot()]).tolist()
+            true_states.append(true_state)
+            t.append(now-start)
 
         viewer.sync()
-        now = time.perf_counter()
-        t.append(now-start)
-        if now - start > 10:
+        
+        if now - start > 15:
             break
         time.sleep(dt)
 
@@ -99,7 +102,17 @@ with mujoco.viewer.launch_passive(model, data) as viewer:
 predicted_states = np.array(predicted_states)
 true_states = np.array(true_states)
 
+plt.subplot(311)
 plt.plot(t, predicted_states[:, 0])
 plt.plot(t, true_states[:, 0])
+
+plt.subplot(312)
+plt.plot(t, predicted_states[:, 1])
+plt.plot(t, true_states[:, 1])
+
+plt.subplot(313)
+plt.plot(t, predicted_states[:, 2])
+plt.plot(t, true_states[:, 2])
+
 plt.show()
 
