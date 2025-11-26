@@ -5,9 +5,11 @@ import numpy as np
 import os
 from sub import Sub
 from telemetry import Telemetry
-import matplotlib
 import matplotlib.pyplot as plt
 import time
+from mppi import *
+from trajectory import Trajectory
+
 
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -64,45 +66,53 @@ def init_swix():
 
     return Sub(eta, v, Mrb, Crb, Ma, Ca, D, g, iface, telemetry)
 
+waypoints = np.array([
+    [0,0,5,0,0,0, 0],
+    [3,0,8,0,0,0, 4],
+    [7,4,8,0,0,0, 8],
+    [4,-2,5,0,0,0, 12]
+])
+
+traj = Trajectory(waypoints)
+
 sub = init_swix()
 predicted_state = sub.eta
 t = []
-predicted_states = []
+goal_states = []
 true_states = []
 plotting_started = True
 
-ctrl = [-3000, -1000, 0, 400, 300, -1000]
-
+ctrl = np.zeros(6)
+count = 0
 start = time.perf_counter()
 with mujoco.viewer.launch_passive(model, data) as viewer:
     dt = model.opt.timestep
     while viewer.is_running():
+       
         now = time.perf_counter()
+        print(now-start)
+        if count % 1000 == 0:
+            ctrl = mppi(sub, traj, now-start, 2000, 25, 1, 0.01)
         # Apply controller input
         sub.control(ctrl)
         mujoco.mj_step(model, data)
 
-        if now - start > 5 and not plotting_started:
-            predicted_state = np.concatenate([sub.telemetry.pos(), sub.telemetry.rot()]).tolist()
-            plotting_started = True
-        
-        if plotting_started:
-            predicted_state = sub.forward_dynamics(predicted_state, sub.v, np.array(ctrl), dt)
-            # Save predicted and true measurements
-            predicted_states.append(predicted_state)
-            true_state = np.concatenate([sub.telemetry.pos(), sub.telemetry.rot()]).tolist()
-            true_states.append(true_state)
-            t.append(now-start)
+        goal_state = traj.sample_trajectory(now-start)
+        # Save predicted and true measurements
+        goal_states.append(goal_state)
+        true_state = np.concatenate([sub.telemetry.pos(), sub.telemetry.rot()]).tolist()
+        true_states.append(true_state)
+        t.append(now-start)
 
         viewer.sync()
         
-        if now - start > 10:
+        if now - start > 30:
             break
-        
+        count +=1 
         time.sleep(dt)
 
     
-predicted_states = np.array(predicted_states)
+predicted_states = np.array(goal_states)
 true_states = np.array(true_states)
 
 plt.subplot(231)

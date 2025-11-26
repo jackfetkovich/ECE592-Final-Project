@@ -58,7 +58,7 @@ class Sub:
 
         eta_next[3:6] = wrap_angle(eta_next[3:6])
 
-        return np.concatenate([eta_next, eta_dot])
+        return np.concatenate([eta_next, v])
 
 
     def r_b_to_n(self, phi, theta, psi):
