@@ -40,25 +40,39 @@ def trfm(x, y, z, phi, theta, psi):
 
 @njit
 def quat_to_euler_zyx(q):
-    """
-    Convert a unit quaternion q = [w, x, y, z] to Euler angles
-    (yaw, pitch, roll) in radians using ZYX order.
-    """
+    # q = [w, x, y, z]
+    w = q[0]
+    x = q[1]
+    y = q[2]
+    z = q[3]
 
-    w, x, y, z = q
+    # ----- yaw (Z rotation) -----
+    t0 = 2.0 * (w*z + x*y)
+    t1 = 1.0 - 2.0 * (y*y + z*z)
+    yaw = np.arctan2(t0, t1)
 
-    # yaw (Z axis rotation)
-    yaw = np.arctan2(2*(w*z + x*y), 1 - 2*(y*y + z*z))
+    # ----- pitch (Y rotation) -----
+    sinp = 2.0 * (w*y - z*x)
 
-    # pitch (Y axis rotation)
-    sinp = 2*(w*y - z*x)
-    sinp = np.clip(sinp, -1.0, 1.0)  # numeric safety
+    # manual clamp because np.clip is not allowed in nopython
+    if sinp > 1.0:
+        sinp = 1.0
+    elif sinp < -1.0:
+        sinp = -1.0
+
     pitch = np.arcsin(sinp)
 
-    # roll (X axis rotation)
-    roll = np.arctan2(2*(w*x + y*z), 1 - 2*(x*x + y*y))
+    # ----- roll (X rotation) -----
+    t2 = 2.0 * (w*x + y*z)
+    t3 = 1.0 - 2.0 * (x*x + y*y)
+    roll = np.arctan2(t2, t3)
 
-    return np.array([yaw, pitch, roll])
+    # ---- output ----
+    out = np.zeros(3)
+    out[0] = yaw
+    out[1] = pitch
+    out[2] = roll
+    return out
 
 @njit
 def wrap_angle(a):

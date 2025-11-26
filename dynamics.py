@@ -48,7 +48,7 @@ def forward_dynamics(eta, v, tau, dt, m, Ix, Iy, Iz, W, B, params):
 
     eta_next[3:6] = wrap_angle(eta_next[3:6])
 
-    return np.concatenate([eta_next, v])
+    return concat1d(eta_next, v)
 
 @njit
 def r_b_to_n(phi, theta, psi):
@@ -78,14 +78,30 @@ def omega_to_world(phi, theta, psi):
 
 @njit
 def J(eta):
-    phi = eta[3]
+    phi   = eta[3]
     theta = eta[4]
-    psi = eta[5]
-    rbn = r_b_to_n(phi, theta, psi) # Convert to z up, rotate to accomodate y being the forward axis
-    T = omega_to_world(phi, theta, psi)
-    zeros = np.zeros((3,3))
-    
-    return np.block([
-        [rbn, zeros],
-        [zeros, T]
-    ])
+    psi   = eta[5]
+
+    rbn = r_b_to_n(phi, theta, psi)        # 3×3
+    T   = omega_to_world(phi, theta, psi)  # 3×3
+
+    Jmat = np.zeros((6, 6))
+
+    # Top-left block = rbn
+    for i in range(3):
+        for j in range(3):
+            Jmat[i, j] = rbn[i, j]
+
+    # Bottom-right block = T
+    for i in range(3):
+        for j in range(3):
+            Jmat[i+3, j+3] = T[i, j]
+
+    return Jmat
+
+@njit
+def concat1d(a, b):
+    out = np.zeros(a.size + b.size)
+    out[:a.size] = a
+    out[a.size:] = b
+    return out

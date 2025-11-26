@@ -53,7 +53,7 @@ def mppi(x_init, traj, time, K, T, lam, dt, m, Ix, Iy, Iz, W, B, params):
 # Cost function
 @njit
 def cost_function(x, u, target):
-    Q = np.diag(np.array([10, 10, 300, 2, 2, 2]))  # State costs
+    Q = np.diag(np.array([10.0, 10.0, 300.0, 2.0, 2.0, 2.0]))  # State costs
     R = np.diag(np.array([0.001,0.001, 0.001, 0.001, 0.001, 0.0001]))  # Input costs
 
     x_des = np.array([target[0], target[1], target[2], target[3], target[4], target[5]])
@@ -69,7 +69,7 @@ def cost_function(x, u, target):
 # Terminal Cost Function
 @njit
 def terminal_cost(x, target):
-    Q = np.diag(np.array([12, 12, 300, 2, 2, 2]))  # State costs
+    Q = np.diag(np.array([12.0, 12.0, 300.0, 2.0, 2.0, 2.0]))  # State costs
     x_des = np.array([target[0], target[1], target[2], target[3], target[4], target[5]])
     state_diff = x_des - x
     for i in range(3, 6, 1):

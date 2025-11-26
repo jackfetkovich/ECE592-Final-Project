@@ -1,16 +1,7 @@
 from transform import *
+from dynamics import *
 
-allocation_matrix = -np.array([
-            [-0.4472, -0.4472, 0, 0, -0.4472, -0.4472, 0, 0],
-            [0.8944, -0.8944, 0, 0, 0.8944, -0.8944, 0, 0],
-            [0, 0, 1, 1, 0, 0, 1, 1],
-            [0, 0, -0.2828, -0.2828, 0, 0, 0.2828, 0.2828],
-            [0, 0, 0.2828, -0.2828, 0, 0, -0.2828, 0.2828],
-            [0.4472, -0.4472, 0, 0, -0.4472, 0.4472, 0, 0]
-        ])
+a = np.array([1,2,3,4])
+b = np.array([5,6,7,8])
 
-tau = np.array([0, 0, 1000, 0, 0, 0])
-
-thrusts = np.linalg.pinv(allocation_matrix) @ tau
-
-print(thrusts)
+print(concat1d(a,b))
