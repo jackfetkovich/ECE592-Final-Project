@@ -56,6 +56,11 @@ waypoints = np.array([
 
 traj = Trajectory(waypoints)
 
+def warmup():
+    mppi(np.concat([eta, np.zeros(6)]), traj, 0.15, 1000, 12, 1, 0.1, m, Ix, Iy, Iz, W, B, params)
+
+warmup()
+
 
 predicted_state = sub.eta
 t = []
@@ -72,8 +77,8 @@ with mujoco.viewer.launch_passive(model, data) as viewer:
        
         now = time.perf_counter()
         print(now-start)
-        if count % 1000 == 0:
-            ctrl = mppi(sub.telemetry.x(), traj, now-start, 2000, 25, 1, 0.01, m, Ix, Iy, Iz, W, B, params)
+        if count % 100 == 0:
+            ctrl = mppi(sub.telemetry.x(), traj, now-start, 1800, 20, 1, 0.01, m, Ix, Iy, Iz, W, B, params)
         # Apply controller input
         sub.control(ctrl)
         mujoco.mj_step(model, data)
