@@ -53,3 +53,7 @@ def quat_to_euler_zyx(q):
     roll = np.arctan2(2*(w*x + y*z), 1 - 2*(x*x + y*y))
 
     return np.array([yaw, pitch, roll])
+
+def wrap_angle(a):
+    # works on scalars or numpy arrays
+    return (a + np.pi) % (2*np.pi) - np.pi

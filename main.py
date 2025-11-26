@@ -71,7 +71,7 @@ predicted_states = []
 true_states = []
 plotting_started = True
 
-ctrl = [1000, 0, 0, 0, 400, 0]
+ctrl = [3000, 1000, 0, 400, 300, 1000]
 
 start = time.perf_counter()
 with mujoco.viewer.launch_passive(model, data) as viewer:
