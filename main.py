@@ -60,7 +60,7 @@ def init_swix():
         for i, thrust in enumerate(thrusts):
             data.ctrl[i] = thrust
 
-    telemetry = Telemetry(data)
+    telemetry = Telemetry(data, model)
 
     return Sub(eta, v, Mrb, Crb, Ma, Ca, D, g, iface, telemetry)
 
@@ -69,7 +69,9 @@ predicted_state = sub.eta
 t = []
 predicted_states = []
 true_states = []
-plotting_started = False
+plotting_started = True
+
+ctrl = [1000, 0, 0, 0, 400, 0]
 
 start = time.perf_counter()
 with mujoco.viewer.launch_passive(model, data) as viewer:
@@ -77,7 +79,7 @@ with mujoco.viewer.launch_passive(model, data) as viewer:
     while viewer.is_running():
         now = time.perf_counter()
         # Apply controller input
-        sub.control([200,200,0,300,400,100])
+        sub.control(ctrl)
         mujoco.mj_step(model, data)
 
         if now - start > 5 and not plotting_started:
@@ -85,7 +87,7 @@ with mujoco.viewer.launch_passive(model, data) as viewer:
             plotting_started = True
         
         if plotting_started:
-            predicted_state = sub.forward_dynamics(predicted_state, sub.v, np.array([200,200,0,300,400,100]), dt)
+            predicted_state = sub.forward_dynamics(predicted_state, sub.v, np.array(ctrl), dt)
             # Save predicted and true measurements
             predicted_states.append(predicted_state)
             true_state = np.concatenate([sub.telemetry.pos(), sub.telemetry.rot()]).tolist()
@@ -94,25 +96,39 @@ with mujoco.viewer.launch_passive(model, data) as viewer:
 
         viewer.sync()
         
-        if now - start > 15:
+        if now - start > 10:
             break
+        
         time.sleep(dt)
 
     
 predicted_states = np.array(predicted_states)
 true_states = np.array(true_states)
 
-plt.subplot(311)
-plt.plot(t, predicted_states[:, 0])
-plt.plot(t, true_states[:, 0])
+plt.subplot(231)
+plt.plot(t, predicted_states[:, 0], label="Predicted")
+plt.plot(t, true_states[:, 0], label="Measured")
+plt.legend()
 
-plt.subplot(312)
+plt.subplot(232)
 plt.plot(t, predicted_states[:, 1])
 plt.plot(t, true_states[:, 1])
 
-plt.subplot(313)
+plt.subplot(233)
 plt.plot(t, predicted_states[:, 2])
 plt.plot(t, true_states[:, 2])
+
+plt.subplot(234)
+plt.plot(t, predicted_states[:, 3])
+plt.plot(t, true_states[:, 5])
+
+plt.subplot(235)
+plt.plot(t, predicted_states[:, 4])
+plt.plot(t, true_states[:, 4])
+
+plt.subplot(236)
+plt.plot(t, predicted_states[:, 5])
+plt.plot(t, true_states[:, 3])
 
 plt.show()
 
