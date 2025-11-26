@@ -3,14 +3,13 @@ import mujoco.viewer
 import time
 import numpy as np
 import os
-from sub import Sub
+from sub import Sub, SubParams
 from telemetry import Telemetry
 import matplotlib.pyplot as plt
 import time
 from mppi import *
 from trajectory import Trajectory
-
-
+from dynamics import *
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 xml_path = os.path.join(BASE_DIR, "project.xml")
@@ -19,52 +18,18 @@ xml_path = os.path.join(BASE_DIR, "project.xml")
 model = mujoco.MjModel.from_xml_path(xml_path)
 data = mujoco.MjData(model)
 mujoco.mj_resetData(model, data)
-# data.qvel[3:6] = 5*np.random.randn(3)
 
-def init_swix():
-    # Initialize submarine
-    m = 22.0
-    Ix = 1/12 * m * (0.4**2 + 0.4**2) 
-    Iy = 1/12 * m * (0.4**2 + 0.8**2)
-    Iz = 1/12 * m * (0.8**2 + 0.4**2)
 
-    grav = 9.81
-    vol = 0.178
-    rho = 1000
 
-    W = m*grav
-    B = rho * grav * vol
 
-    eta = np.array([0, 0, 5, 0, 0, 0])
-    v = np.zeros(6)
-    Mrb = np.diag([m, m, m, Ix, Iy, Iz])
-    Crb = lambda v: np.array([
-        [0, 0, 0, 0, v[2], 0],
-        [0, 0, 0, -m * v[2], 0, 0],
-        [0, 0, 0, m*v[1], -m*v[1], 0],
-        [0, m*v[2], -m*v[1], 0, Iz * v[5], -Iy*v[4]],
-        [-m*v[2], 0, -m*v[0], -Iz * v[5], 0, Ix*v[3]],
-        [-m*v[1], -m*v[0], 0, Iy*v[4], -Ix*v[3], 0]
-    ])
-    Ma = np.zeros((6,6))
-    Ca = lambda v: np.zeros((6,6))
-    D = lambda v: np.zeros((6,6))
-    g = lambda eta: np.array([
-        (W-B)*np.sin(eta[4]),
-        -(W-B)*np.cos(eta[4])*np.sin(eta[3]),
-        -(W-B)*np.cos(eta[4])*np.cos(eta[3]),
-        0,
-        0, 
-        0
-    ])
+def iface(thrusts):
+    for i, thrust in enumerate(thrusts):
+        data.ctrl[i] = thrust
 
-    def iface(thrusts):
-        for i, thrust in enumerate(thrusts):
-            data.ctrl[i] = thrust
+telemetry = Telemetry(data, model)
+params = SubParams(Mrb, Crb, Ma, Ca, D, g)
 
-    telemetry = Telemetry(data, model)
-
-    return Sub(eta, v, Mrb, Crb, Ma, Ca, D, g, iface, telemetry)
+sub = Sub(eta, v, iface, telemetry, params)
 
 waypoints = np.array([
     [0.0,0.0,5.0,0.0,0.0,0.0, 0.0],
@@ -75,7 +40,7 @@ waypoints = np.array([
 
 traj = Trajectory(waypoints)
 
-sub = init_swix()
+
 predicted_state = sub.eta
 t = []
 goal_states = []
