@@ -5,10 +5,10 @@ from numba import njit
 
 
 @njit
-def mppi(sub, traj, time, params):
+def mppi(sub, traj, time, params, K, T):
     means = np.array([3, 0, 0, 0, 0, 0])
     sigmas = np.array([5, 5, 5])
-    X_calc = np.zeros((params.K, params.T + 1, 12))
+    X_calc = np.zeros((K, params.T + 1, 12))
 
     # x = [eta, eta_dot]: configuration in the global frame
 
@@ -28,7 +28,7 @@ def mppi(sub, traj, time, params):
         for t in range(len(targets)-1):
             u_nom = U[k,t]
             u_safe = u_nom
-            X_calc[k, t + 1, :] = unicyle_dynamics(X_calc[k, t, :], u_safe, params)
+            X_calc[k, t + 1, :] = sub.forward_dynamics(X_calc[k, t, :], u_safe, params)
             next_x = X_calc[k, t+1, :]
                    
             current_target = targets[t]

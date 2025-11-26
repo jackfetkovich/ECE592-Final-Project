@@ -5,9 +5,14 @@ import numpy as np
 import os
 from sub import Sub
 from telemetry import Telemetry
+import matplotlib
+import matplotlib.pyplot as plt
+import time
+
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 xml_path = os.path.join(BASE_DIR, "project.xml")
+
 
 model = mujoco.MjModel.from_xml_path(xml_path)
 data = mujoco.MjData(model)
@@ -60,23 +65,41 @@ def init_swix():
     return Sub(eta, v, Mrb, Crb, Ma, Ca, D, g, iface, telemetry)
 
 sub = init_swix()
+predicted_state = sub.eta
+t = []
+predicted_states = []
+true_states = []
 
-# x_new = sub.forward_dynamics(sub.eta, sub.v, np.array([100, 1000, 0, 0, 0, 0]), 4)
-# print(x_new)
-
+start = time.perf_counter()
 with mujoco.viewer.launch_passive(model, data) as viewer:
     dt = model.opt.timestep
     while viewer.is_running():
-        # data.ctrl[0] = 0
-        # data.ctrl[1] = 0
-        # data.ctrl[2] = 250
-        # data.ctrl[3] = 250
-        # data.ctrl[4] = 0
-        # data.ctrl[5] = 0
-        # data.ctrl[6] = 250
-        # data.ctrl[7] = 250
-        sub.control([100,0,0,0,0,0])
-        sub.print_telemetry()
+        # Apply controller input
+        sub.control([200,0,0,0,0,0])
         mujoco.mj_step(model, data)
+
+        # Predict based on controller input
+        predicted_state = sub.forward_dynamics(predicted_state, sub.v, np.array([200,0,0,0,0,0]), dt)
+        print(sub.v)
+
+
+        # Save predicted and true measurements
+        predicted_states.append(predicted_state)
+        true_state = np.concatenate([sub.telemetry.pos(), sub.telemetry.rot()]).tolist()
+        true_states.append(true_state)
+
         viewer.sync()
+        now = time.perf_counter()
+        t.append(now-start)
+        if now - start > 10:
+            break
         time.sleep(dt)
+
+    
+predicted_states = np.array(predicted_states)
+true_states = np.array(true_states)
+
+plt.plot(t, predicted_states[:, 0])
+plt.plot(t, true_states[:, 0])
+plt.show()
+

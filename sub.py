@@ -52,11 +52,8 @@ class Sub:
         """
         
         v_dot = np.linalg.inv(self.Mrb + self.Ma) @ (tau - self.g(eta) - (self.Crb(v)@v + self.Ca(v)@v + self.D(v)@v))
-        print(f"vdot: {v_dot}")
         v = v + v_dot * dt
-        print(f"v: {v}")
         eta_dot = self.J(eta) @ v
-        print(f"eta_dot: {eta_dot}")
         return eta + eta_dot * dt
 
     def r_b_to_n(self, phi, theta, psi):
@@ -87,7 +84,7 @@ class Sub:
         phi = eta[3]
         theta = eta[4]
         psi = eta[5]
-        rbn = np.array([[0, 1, 0], [1, 0, 0], [0, 0, -1]]) @ self.r_b_to_n(phi, theta, psi) # Convert to z up, rotate to accomodate y being the forward axis
+        rbn = self.r_b_to_n(phi, theta, psi) # Convert to z up, rotate to accomodate y being the forward axis
         T = self.omega_to_world(phi, theta, psi)
         zeros = np.zeros((3,3))
         
@@ -97,6 +94,7 @@ class Sub:
         ])
     
     def control(self, tau):
+        self.v = self.telemetry.vel()
         thrusts = np.linalg.pinv(self.allocation_matrix) @ tau
         self.ctrl_iface(thrusts)
 
