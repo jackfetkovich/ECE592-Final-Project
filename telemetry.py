@@ -19,3 +19,6 @@ class Telemetry:
         linvel = tfm.T @ np.array([self.data.sensordata[7], self.data.sensordata[8], self.data.sensordata[9]])
         angvel = tfm.T @ np.array([self.data.sensordata[10], self.data.sensordata[11], self.data.sensordata[12]])
         return np.concatenate([linvel, angvel])
+    
+    def x(self):
+        return np.concatenate([self.pos(), self.rot(), self.vel()])

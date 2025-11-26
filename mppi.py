@@ -5,52 +5,45 @@ from numba import njit
 
 
 @njit
-def mppi(sub, traj, time, params, K, T):
-    means = np.array([3, 0, 0, 0, 0, 0])
-    sigmas = np.array([5, 5, 5])
-    X_calc = np.zeros((K, params.T + 1, 12))
+def mppi(sub, traj, time, params, K, T, lam, dt):
+    means = np.array([300, 0, 0, 0, 0, 0])
+    sigmas = np.array([400, 400, 400, 0.1, 0.1, 0.4])
+    X_calc = np.zeros((K, T + 1, 12))
 
-    # x = [eta, eta_dot]: configuration in the global frame
+    U = gen_normal_control_seq(means, sigmas, K, T)
 
+    targets = np.zeros((T, 6)) # Discretize path for computation
+    for i in range(T):
+        targets[i] = traj.sample_trajectory(time + i * dt)
 
-    U = gen_normal_control_seq(0.3, 1, 0, params.max_w, params.K, params.T) #
-
-    targets = np.zeros((params.T, 6)) # Discretize path for computation
-    for i in range(params.T):
-        targets[i] = traj.sample_trajectory(time + i * params.dt)
-
-    for k in range(params.K):
-        X_calc[k, 0, :] = x  # Initialize all trajectories with the current state
+    for k in range(K):
+        X_calc[k, 0, :] =  sub.telemetry.x() # Initialize all trajectories with the current state
             
-    costs = np.zeros(params.K) # initialize all costs
-    last_u = np.zeros(2)
-    for k in range(params.K):
+    costs = np.zeros(K) # initialize all costs
+    for k in range(K):
         for t in range(len(targets)-1):
             u_nom = U[k,t]
-            u_safe = u_nom
-            X_calc[k, t + 1, :] = sub.forward_dynamics(X_calc[k, t, :], u_safe, params)
-            next_x = X_calc[k, t+1, :]
+            X_calc[k, t + 1, :] = sub.forward_dynamics(X_calc[k, t, 0:6], u_nom)
                    
             current_target = targets[t]
-            cost = cost_function(X_calc[k, t+1, :], u_safe, current_target)
+            cost = cost_function(X_calc[k, t+1, :], u_nom, current_target)
             costs[k] += cost
-            last_u = u_safe
+            last_u = u_nom
         
         final_target = targets[-1]    
-        terminal_cost_val = terminal_cost(X_calc[k, params.T, :], final_target) #Terminal cost of final state
+        terminal_cost_val = terminal_cost(X_calc[k, T, :], final_target) #Terminal cost of final state
         costs[k] += terminal_cost_val
         
-        last_u = np.zeros(2)
         
     # Calculate weights for each trajectory
-    weights = np.exp(-(costs - np.min(costs)) / params.lambda_)
+    weights = np.exp(-(costs - np.min(costs)) / lam)
     sum_weights = np.sum(weights)
     if sum_weights < 1e-10:
         weights = np.ones_like(weights) / len(weights)  # fallback to uniform
     else:
         weights /= sum_weights
     
-    traj_weight_single = np.zeros(params.K)
+    traj_weight_single = np.zeros(K)
     traj_weight_single[:] = weights
 
     # Compute the weighted sum of control inputs

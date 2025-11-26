@@ -54,11 +54,11 @@ class Sub:
         v_dot = np.linalg.inv(self.Mrb + self.Ma) @ (tau - self.g(eta) - (self.Crb(v)@v + self.Ca(v)@v + self.D(v)@v))
         v = v + v_dot * dt
         eta_dot = self.J(eta) @ v
-        eta_next = eta + eta_dot * dt
+        eta_next = eta[0:6] + eta_dot * dt
 
         eta_next[3:6] = wrap_angle(eta_next[3:6])
 
-        return eta_next
+        return np.concatenate([eta_next, eta_dot])
 
 
     def r_b_to_n(self, phi, theta, psi):
