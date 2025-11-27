@@ -54,7 +54,7 @@ sub = Sub(eta, v, iface, telemetry, params)
 
 waypoints = np.array([
     [0.0,0.0,5.0,0.0,0.0,0.0, 0.0],
-    [0.0,0.0,8.0,0.0,0.0,0.0, 2.0],
+    [0.0,0.0,8.0,0.0,0.0,0.0, 3.0],
     [0.0,0.0,8.0,0.0,0.0,0.0, 8.0],
     [0.0,0.0,5.0,0.0,0.0,0.0, 12.0]
 ])
@@ -99,7 +99,7 @@ with mujoco.viewer.launch_passive(model, data) as viewer:
     while viewer.is_running():
        
         now = time.perf_counter()
-        print(now-start)
+        # print(now-start)
 
         #  Apply static input
 
@@ -109,10 +109,10 @@ with mujoco.viewer.launch_passive(model, data) as viewer:
                 np.concatenate([sub.eta, sub.v]),
                 traj,
                 sim_time,
-                K=2000,            # candidate trajectories
-                T=13,              # horizon
-                lam=0.1,
-                dt=0.01,
+                K=800,            # candidate trajectories
+                T=50,              # horizon
+                lam=0.01,
+                dt=0.1,
                 model_headless=model_headless,
                 data_headless=data_headless
             )
@@ -140,7 +140,7 @@ with mujoco.viewer.launch_passive(model, data) as viewer:
         viewer.sync()
         
         # simulation length
-        if now - start > 60:
+        if now - start > 120:
             break
         count +=1 
         sim_time += dt
@@ -152,7 +152,7 @@ actual_states = np.array(actual_states)
 
 # true_states = np.array(true_states)
 desired_states = np.array(desired_states)
-print(sim_time)
+# print(sim_time)
 
 plt.subplot(231)
 # plt.plot(t, predicted_states[:, 0], label="Predicted")

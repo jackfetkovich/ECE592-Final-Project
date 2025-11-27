@@ -21,8 +21,9 @@ filename = "./debug_data/mppi_debug.csv"
 
 def mppi_mujoco_parallel(x_init, traj, time, K, T, lam, dt, model_headless, data_headless):    
     # Preallocate candidate control sequences
+    hover = 992
     means = np.array([0,0,992,0,0,0])
-    sigmas = np.array([0,0,200,0,0,0])
+    sigmas = np.array([0,0,1000,0,0,0])
     
     U = gen_normal_control_seq(means, sigmas, K, T)
     
@@ -41,7 +42,7 @@ def mppi_mujoco_parallel(x_init, traj, time, K, T, lam, dt, model_headless, data
         data_headless.qpos[:6] = x_init[:6]
         data_headless.qvel[:6] = x_init[6:]
         mujoco.mj_forward(model_headless, data_headless)
-        print(U[k, :])
+        # print(U[k, :])
         
         for t in range(T):
             data_headless.ctrl[:8] = np.linalg.pinv(allocation_matrix) @ U[k,t]
@@ -57,7 +58,7 @@ def mppi_mujoco_parallel(x_init, traj, time, K, T, lam, dt, model_headless, data
             writer.writerow([x_t[2], targets[t,2], abs(targets[t,2] - x_t[2]), this_cost])
         
         costs[k] += terminal_cost(data_headless.qpos[:6], targets[-1])
-        print(costs[k])
+        # print(costs[k])
     
     # Compute weights
     weights = np.exp(-(costs - np.min(costs))/lam)
@@ -67,10 +68,12 @@ def mppi_mujoco_parallel(x_init, traj, time, K, T, lam, dt, model_headless, data
         print("NUMERICAL ISSUE")
     else:
         weights /= sum_weights
+
+    
     
     # Weighted sum of control sequences
     u_star = np.sum(weights[:, None, None]*U, axis=0)
-    
+    print(u_star[0])
     return u_star[0]
 
 
@@ -154,7 +157,8 @@ def mppi(x_init, traj, time, K, T, lam, dt, m, Ix, Iy, Iz, W, B, params):
 @njit
 def cost_function(x, u, target):
     Q = np.diag(np.array([0.0,0.0, 10.0, 0.0, 0.0, 0.0]))  # State costs
-    R = np.diag(np.array([0.00000001,0.00000001, 0.00000001, 0.00000001, 0.00000001, 0.00000001]))  # Input costs
+    # R = np.diag(np.array([0.0000000000001,0.0000000000001, 0.0000000000001, 0.0000000000001, 0.0000000000001, 0.0000000000001]))  # Input costs
+    R = np.zeros((6,6))
 
     x_des = np.array([target[0], target[1], target[2], target[3], target[4], target[5]])
     state_diff = x_des - x
@@ -169,7 +173,7 @@ def cost_function(x, u, target):
 # Terminal Cost Function
 @njit
 def terminal_cost(x, target):
-    Q = np.diag(np.array([0.0, 0.0, 10.0, 0.0, 0.0, 0.0]))  # State costs
+    Q = np.diag(np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0]))  # State costs
     x_des = np.array([target[0], target[1], target[2], target[3], target[4], target[5]])
     state_diff = x_des - x
     for i in range(3, 6, 1):
