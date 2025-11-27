@@ -60,17 +60,18 @@ def warmup():
     print("Warming up...")
     mppi(np.concat([eta, np.zeros(6)]), traj, 0.15, 1000, 12, 1, 0.1, m, Ix, Iy, Iz, W, B, params)
 
-warmup()
+# warmup()
 
 
-predicted_state = sub.eta
+predicted_state = np.concatenate((eta, v)).astype(np.float64)
+
 t = []
 goal_states = []
 true_states = []
 plotting_started = True
 sim_time = 0
 
-ctrl = np.zeros(6)
+# ctrl = np.zeros(6)
 count = 0
 start = time.perf_counter()
 with mujoco.viewer.launch_passive(model, data) as viewer:
@@ -79,15 +80,33 @@ with mujoco.viewer.launch_passive(model, data) as viewer:
        
         now = time.perf_counter()
         print(now-start)
-        if count % 100 == 0:
-            ctrl = mppi(sub.telemetry.x(), traj, sim_time, 2500, 20, 1, 0.01, m, Ix, Iy, Iz, W, B, params)
+
+        #  Apply static input
+        ctrl = np.array([200,0,0,0,0,0], dtype=np.float64)
+
+        # if count % 100 == 0:
+        #     ctrl = mppi(sub.telemetry.x(), traj, sim_time, 2500, 20, 1, 0.01, m, Ix, Iy, Iz, W, B, params)
+
         # Apply controller input
         sub.control(ctrl)
         mujoco.mj_step(model, data)
 
-        goal_state = traj.sample_trajectory(sim_time)
+        # goal_state = traj.sample_trajectory(sim_time)
+
+        predicted_eta = predicted_state[:6]
+        predicted_v = predicted_state[6:]
+
+        # Predict based on controller input
+        new_state = forward_dynamics(predicted_eta, predicted_v, ctrl, dt, m, Ix, Iy, Iz, W, B, params)
+
         # Save predicted and true measurements
-        goal_states.append(goal_state)
+
+        predicted_state[:6] = new_state[:6]
+        predicted_state[6:] = new_state[6:]
+
+        # goal_states.append(goal_state)
+        goal_states.append(predicted_state.copy())
+
         true_state = np.concatenate([sub.telemetry.pos(), sub.telemetry.rot()]).tolist()
         true_states.append(true_state)
         t.append(sim_time)
