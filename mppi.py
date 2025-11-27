@@ -23,7 +23,7 @@ def mppi_mujoco_parallel(x_init, traj, time, K, T, lam, dt, model_headless, data
     # Preallocate candidate control sequences
     hover = 992
     means = np.array([0,0,992,0,0,0])
-    sigmas = np.array([0,0,1000,0,0,0])
+    sigmas = np.array([1000,0,1000,0,0,0])
     
     U = gen_normal_control_seq(means, sigmas, K, T)
     
@@ -156,7 +156,7 @@ def mppi(x_init, traj, time, K, T, lam, dt, m, Ix, Iy, Iz, W, B, params):
 # Cost function
 @njit
 def cost_function(x, u, target):
-    Q = np.diag(np.array([0.0,0.0, 10.0, 0.0, 0.0, 0.0]))  # State costs
+    Q = np.diag(np.array([10.0,0.0, 10.0, 0.0, 0.0, 0.0]))  # State costs
     # R = np.diag(np.array([0.0000000000001,0.0000000000001, 0.0000000000001, 0.0000000000001, 0.0000000000001, 0.0000000000001]))  # Input costs
     R = np.zeros((6,6))
 
