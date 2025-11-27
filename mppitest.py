@@ -1,3 +1,4 @@
+
 import mujoco
 import mujoco.viewer
 import time
@@ -23,20 +24,25 @@ mujoco.mj_resetData(model, data)
 
 # Initialize submarine
 m = 22.0
+Ix = 1/12 * m * (0.4**2 + 0.4**2) 
+Iy = 1/12 * m * (0.4**2 + 0.8**2)
+Iz = 1/12 * m * (0.8**2 + 0.4**2)
+
 body_id = model.body(name="SWIX").id
 m   = model.body_mass[body_id]
 I_mj   = model.body_inertia[body_id]     # [Ixx, Iyy, Izz]
 
 Ix, Iy, Iz = I_mj[0], I_mj[1], I_mj[2]
 
+
 grav = 9.81
-vol = 0.178
+vol = 0.88
 rho = 1000
 
 W = m*grav
 B = rho * grav * vol
 
-eta = np.array([0.0, 0.0, 5.0, 0.0, 0.0, 0.0])
+eta = np.array([0, 0, 5, 0, 0, 0])
 v = np.zeros(6)
 Mrb = np.diag([m, m, m, Ix, Iy, Iz])
 
@@ -52,8 +58,8 @@ sub = Sub(eta, v, iface, telemetry, params)
 waypoints = np.array([
     [0.0,0.0,5.0,0.0,0.0,0.0, 0.0],
     [0.0,0.0,3.0,0.0,0.0,0.0, 1.0],
-    [0.0,0.0,3.0,0.0,0.0,0.0, 2.0],
-    [0.0,0.0,5.0,0.0,0.0,0.0, 3.0]
+    [0.0,0.0,5.0,0.0,0.0,0.0, 2.0],
+    [0.0,0.0,3.0,0.0,0.0,0.0, 3.0]
 ])
 
 traj = Trajectory(waypoints)
@@ -62,62 +68,41 @@ def warmup():
     print("Warming up...")
     mppi(np.concat([eta, np.zeros(6)]), traj, 0.15, 1000, 12, 1, 0.1, m, Ix, Iy, Iz, W, B, params)
 
-# warmup()
+warmup()
 
 
-predicted_state = np.concatenate((eta, v)).astype(np.float64)
-
+predicted_state = sub.eta
 t = []
 goal_states = []
 true_states = []
 plotting_started = True
 sim_time = 0
 
-# ctrl = np.zeros(6)
+ctrl = np.zeros(6)
 count = 0
 start = time.perf_counter()
 with mujoco.viewer.launch_passive(model, data) as viewer:
     dt = model.opt.timestep
     while viewer.is_running():
        
-        # ctrl = np.random.uniform(-2000, 2000, 6)
-        ctrl = np.zeros(6)
         now = time.perf_counter()
-        # print(now-start)
-
-        #  Apply static input
-
-        # if count % 100 == 0:
-        #     ctrl = mppi(sub.telemetry.x(), traj, sim_time, 2500, 20, 1, 0.01, m, Ix, Iy, Iz, W, B, params)
-
+        print(now-start)
+        if count % 100 == 0:
+            ctrl = mppi(sub.telemetry.x(), traj, sim_time, 2000, 15, 10, 0.01, m, Ix, Iy, Iz, W, B, params)
         # Apply controller input
         sub.control(ctrl)
         mujoco.mj_step(model, data)
 
-        # goal_state = traj.sample_trajectory(sim_time)
-        
-        predicted_eta = predicted_state[:6]
-        predicted_v = predicted_state[6:]
-        print(predicted_eta)
-        # Predict based on controller input
-        new_state = forward_dynamics(predicted_eta, predicted_v, ctrl, dt, m, Ix, Iy, Iz, W, B, params)
-        # print(new_state)
-
+        goal_state = traj.sample_trajectory(sim_time)
         # Save predicted and true measurements
-
-        predicted_state[:6] = new_state[:6]
-        predicted_state[6:] = new_state[6:]
-
-        # goal_states.append(goal_state)
-        goal_states.append(predicted_state.copy())
-
+        goal_states.append(goal_state)
         true_state = np.concatenate([sub.telemetry.pos(), sub.telemetry.rot()]).tolist()
         true_states.append(true_state)
         t.append(sim_time)
 
         viewer.sync()
         
-        if now - start > 20:
+        if now - start > 60:
             break
         count +=1 
         sim_time += dt

@@ -7,8 +7,8 @@ from dynamics import *
 
 @njit
 def mppi(x_init, traj, time, K, T, lam, dt, m, Ix, Iy, Iz, W, B, params):
-    means = np.array([0, 0, 1200, 0, 0, 0])
-    sigmas = np.array([600, 600, 600, 25, 25, 25])
+    means = np.array([0, 0, 500, 0, 0, 0])
+    sigmas = np.array([200, 200, 1000, 25, 25, 25])
     X_calc = np.zeros((K, T + 1, 12))
 
     U = gen_normal_control_seq(means, sigmas, K, T)
@@ -53,8 +53,8 @@ def mppi(x_init, traj, time, K, T, lam, dt, m, Ix, Iy, Iz, W, B, params):
 # Cost function
 @njit
 def cost_function(x, u, target):
-    Q = np.diag(np.array([10.0, 10.0, 300.0, 2.0, 2.0, 2.0]))  # State costs
-    R = np.diag(np.array([0.001,0.001, 0.001, 0.001, 0.001, 0.0001]))  # Input costs
+    Q = np.diag(np.array([20.0, 20.0, 20.0, 5.0, 5.0, 5.0]))  # State costs
+    R = np.diag(np.array([0.1,0.1, 0.1, 0.1, 0.1, 0.1]))  # Input costs
 
     x_des = np.array([target[0], target[1], target[2], target[3], target[4], target[5]])
     state_diff = x_des - x
@@ -69,7 +69,7 @@ def cost_function(x, u, target):
 # Terminal Cost Function
 @njit
 def terminal_cost(x, target):
-    Q = np.diag(np.array([12.0, 12.0, 300.0, 2.0, 2.0, 2.0]))  # State costs
+    Q = np.diag(np.array([15.0, 15.0, 15.0, 5.0, 5.0, 5.0]))  # State costs
     x_des = np.array([target[0], target[1], target[2], target[3], target[4], target[5]])
     state_diff = x_des - x
     for i in range(3, 6, 1):
