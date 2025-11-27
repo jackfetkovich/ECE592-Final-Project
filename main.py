@@ -8,6 +8,7 @@ from telemetry import Telemetry
 import matplotlib.pyplot as plt
 import time
 from mppi import *
+from mppi import mppi_mujoco_parallel
 from trajectory import Trajectory
 from dynamics import *
 
@@ -18,8 +19,6 @@ xml_path = os.path.join(BASE_DIR, "project.xml")
 model = mujoco.MjModel.from_xml_path(xml_path)
 data = mujoco.MjData(model)
 mujoco.mj_resetData(model, data)
-
-
 
 # Initialize submarine
 m = 22.0
@@ -56,25 +55,39 @@ waypoints = np.array([
 
 traj = Trajectory(waypoints)
 
+# Headless MuJoCo instance for MPPI
+model_headless = mujoco.MjModel.from_xml_path(xml_path)
+data_headless = mujoco.MjData(model_headless)
+
 def warmup():
     print("Warming up...")
-    mppi(np.concat([eta, np.zeros(6)]), traj, 0.15, 1000, 12, 1, 0.1, m, Ix, Iy, Iz, W, B, params)
+    # mppi(np.concat([eta, np.zeros(6)]), traj, 0.15, 1000, 12, 1, 0.1, m, Ix, Iy, Iz, W, B, params)
+    mppi_mujoco_parallel(
+        np.concatenate([eta, np.zeros(6)]),  # initial state [eta | v]
+        traj,
+        0.15,                                # starting time
+        K=50,                                # small number for warmup
+        T=12,
+        lam=1.0,
+        dt=model.opt.timestep,
+        model_headless=model_headless,
+        data_headless=data_headless
+    )
 
-# warmup()
+warmup()
 
 
-predicted_state = np.concatenate((eta, v)).astype(np.float64)
+actual_state = np.concatenate((eta, v)).astype(np.float64)
 
 t = []
-goal_states = []
-true_states = []
+actual_states = []
+desired_states = []
 plotting_started = True
 sim_time = 0
 
-# ctrl = np.zeros(6)
 count = 0
 start = time.perf_counter()
-ctrl = np.array([200.0,0.0,0.0,0.0,0.0,0.0])
+ctrl = np.array([300.0,0.0,0.0,0.0,0.0,0.0])
 with mujoco.viewer.launch_passive(model, data) as viewer:
     dt = model.opt.timestep
     while viewer.is_running():
@@ -84,8 +97,19 @@ with mujoco.viewer.launch_passive(model, data) as viewer:
 
         #  Apply static input
 
-        # if count % 100 == 0:
+        if count % 100 == 0:
         #     ctrl = mppi(sub.telemetry.x(), traj, sim_time, 2500, 20, 1, 0.01, m, Ix, Iy, Iz, W, B, params)
+            ctrl = mppi_mujoco_parallel(
+                np.concatenate([sub.eta, sub.v]),
+                traj,
+                sim_time,
+                K=200,            # candidate trajectories
+                T=20,              # horizon
+                lam=1.0,
+                dt=model.opt.timestep,
+                model_headless=model_headless,
+                data_headless=data_headless
+            )
 
         # Apply controller input
         sub.control(ctrl)
@@ -93,61 +117,70 @@ with mujoco.viewer.launch_passive(model, data) as viewer:
 
         # goal_state = traj.sample_trajectory(sim_time)
 
-        predicted_eta = predicted_state[:6]
-        predicted_v = predicted_state[6:]
+        actual_eta = actual_state[:6]
+        actual_v = actual_state[6:]
 
-        # Predict based on controller input
-        new_state = forward_dynamics(predicted_eta, sub.v, ctrl, dt, m, Ix, Iy, Iz, W, B, params)
-
-        # Save predicted and true measurements
-
-        predicted_state[:6] = new_state[:6]
-        predicted_state[6:] = new_state[6:]
+        actual_state = np.concatenate([sub.telemetry.pos(), sub.telemetry.rot()]).astype(np.float64)
 
         # goal_states.append(goal_state)
-        goal_states.append(predicted_state.copy())
+        actual_states.append(actual_state.copy())
 
-        true_state = np.concatenate([sub.telemetry.pos(), sub.telemetry.rot()]).tolist()
-        true_states.append(true_state)
+        # desired state from defined trajectory
+        desired_state = traj.sample_trajectory(sim_time)
+        desired_states.append(desired_state)
+
         t.append(sim_time)
 
         viewer.sync()
         
-        if now - start > 20:
+        # simulation length
+        if now - start > 60:
             break
         count +=1 
         sim_time += dt
         time.sleep(dt)
 
     
-predicted_states = np.array(goal_states)
-true_states = np.array(true_states)
+# predicted_states = np.array(goal_states)
+actual_states = np.array(actual_states)
+
+# true_states = np.array(true_states)
+desired_states = np.array(desired_states)
 print(sim_time)
 
 plt.subplot(231)
-plt.plot(t, predicted_states[:, 0], label="Predicted")
-plt.plot(t, true_states[:, 0], label="Measured")
+# plt.plot(t, predicted_states[:, 0], label="Predicted")
+plt.plot(t, actual_states[:, 0], label="Actual")
+
+# plt.plot(t, true_states[:, 0], label="Measured")
+plt.plot(t, desired_states[:, 0], label="Desired")
+
 plt.legend()
 
 plt.subplot(232)
-plt.plot(t, predicted_states[:, 1])
-plt.plot(t, true_states[:, 1])
+# plt.plot(t, predicted_states[:, 1])
+plt.plot(t, actual_states[:, 1])
+plt.plot(t, desired_states[:, 1])
 
 plt.subplot(233)
-plt.plot(t, predicted_states[:, 2])
-plt.plot(t, true_states[:, 2])
+# plt.plot(t, predicted_states[:, 2])
+plt.plot(t, actual_states[:, 2])
+plt.plot(t, desired_states[:, 2])
 
 plt.subplot(234)
-plt.plot(t, predicted_states[:, 3])
-plt.plot(t, true_states[:, 5])
+# plt.plot(t, predicted_states[:, 3])
+plt.plot(t, actual_states[:, 3])
+plt.plot(t, desired_states[:, 3])
 
 plt.subplot(235)
-plt.plot(t, predicted_states[:, 4])
-plt.plot(t, true_states[:, 4])
+# plt.plot(t, predicted_states[:, 4])
+plt.plot(t, actual_states[:, 4])
+plt.plot(t, desired_states[:, 4])
 
 plt.subplot(236)
-plt.plot(t, predicted_states[:, 5])
-plt.plot(t, true_states[:, 3])
+# plt.plot(t, predicted_states[:, 5])
+plt.plot(t, actual_states[:, 5])
+plt.plot(t, desired_states[:, 5])
 
 plt.show()
 

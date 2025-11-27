@@ -1,3 +1,4 @@
+import mujoco
 import numpy as np
 from numba import int64, float64, boolean
 from numba.experimental import jitclass
@@ -5,6 +6,84 @@ from numba import njit
 from transform import *
 from dynamics import *
 
+def mppi_mujoco_parallel(x_init, traj, time, K, T, lam, dt, model_headless, data_headless):    
+    # Preallocate candidate control sequences
+    means = np.array([0,0,1600,0,0,0])
+    sigmas = np.array([600,600,600,25,25,25])
+    
+    U = np.random.normal(loc=means, scale=sigmas, size=(K,T,6))
+    
+    # Discretize trajectory
+    targets = np.zeros((T, 6))
+    for t in range(T):
+        targets[t] = traj.sample_trajectory(time + t*dt)
+    
+    # Preallocate costs
+    costs = np.zeros(K)
+    
+    # Parallel loop: candidate trajectories
+    for k in range(K):
+        # Reset headless MuJoCo for this trajectory
+        mujoco.mj_resetData(model_headless, data_headless)
+        data_headless.qpos[:6] = x_init[:6]
+        data_headless.qvel[:6] = x_init[6:]
+        mujoco.mj_forward(model_headless, data_headless)
+        
+        for t in range(T):
+            data_headless.ctrl[:6] = U[k,t]
+            mujoco.mj_step(model_headless, data_headless)
+            
+            x_t = data_headless.qpos[:6].copy()
+            u_t = U[k,t]
+            costs[k] += cost_function(x_t, u_t, targets[t])
+        
+        costs[k] += terminal_cost(data_headless.qpos[:6], targets[-1])
+    
+    # Compute weights
+    weights = np.exp(-(costs - np.min(costs))/lam)
+    sum_weights = np.sum(weights)
+    if sum_weights < 1e-10:
+        weights = np.ones_like(weights)/len(weights)
+    else:
+        weights /= sum_weights
+    
+    # Weighted sum of control sequences
+    u_star = np.sum(weights[:, None, None]*U, axis=0)
+    
+    return u_star[0]
+
+
+def mujoco_rollout(model, data, eta_init, v_init, U, dt):
+    """
+    Simulate a sequence of controls in headless MuJoCo.
+    """
+
+    T = U.shape[0]
+    trajectory = np.zeros((T+1, 12))
+    
+    # Initialize
+    data.qpos[:6] = eta_init
+    data.qvel[:6] = v_init
+    mujoco.mj_forward(model, data)
+    
+    trajectory[0, :6] = eta_init
+    trajectory[0, 6:] = v_init
+    
+    for t in range(T):
+        # Apply control
+        data.ctrl[:6] = U[t]
+        
+        # Step MuJoCo
+        mujoco.mj_step(model, data)
+        
+        # Save state
+        trajectory[t+1, :6] = data.qpos[:6].copy()
+        trajectory[t+1, 6:] = data.qvel[:6].copy()
+        
+    return trajectory
+# ------------------------------------------------------------------------------------
+# OLD MPPI
+# ------------------------------------------------------------------------------------
 @njit
 def mppi(x_init, traj, time, K, T, lam, dt, m, Ix, Iy, Iz, W, B, params):
     means = np.array([0, 0, 1200, 0, 0, 0])
