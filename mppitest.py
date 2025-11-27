@@ -24,9 +24,9 @@ mujoco.mj_resetData(model, data)
 
 # Initialize submarine
 m = 22.0
-Ix = 1/12 * m * (0.4**2 + 0.4**2) 
-Iy = 1/12 * m * (0.4**2 + 0.8**2)
-Iz = 1/12 * m * (0.8**2 + 0.4**2)
+# Ix = 1/12 * m * (0.4**2 + 0.4**2) 
+# Iy = 1/12 * m * (0.4**2 + 0.8**2)
+# Iz = 1/12 * m * (0.8**2 + 0.4**2)
 
 body_id = model.body(name="SWIX").id
 m   = model.body_mass[body_id]
@@ -40,7 +40,7 @@ vol = 0.88
 rho = 1000
 
 W = m*grav
-B = rho * grav * vol
+B = 0
 
 eta = np.array([0, 0, 5, 0, 0, 0])
 v = np.zeros(6)

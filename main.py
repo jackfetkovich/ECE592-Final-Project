@@ -28,13 +28,15 @@ m   = model.body_mass[body_id]
 I_mj   = model.body_inertia[body_id]     # [Ixx, Iyy, Izz]
 
 Ix, Iy, Iz = I_mj[0], I_mj[1], I_mj[2]
+print(I_mj)
 
 grav = 9.81
-vol = 0.178
+vol = 0.128
 rho = 1000
 
 W = m*grav
 B = rho * grav * vol
+
 
 eta = np.array([0.0, 0.0, 5.0, 0.0, 0.0, 0.0])
 v = np.zeros(6)
@@ -80,8 +82,8 @@ with mujoco.viewer.launch_passive(model, data) as viewer:
     dt = model.opt.timestep
     while viewer.is_running():
        
-        # ctrl = np.random.uniform(-2000, 2000, 6)
-        ctrl = np.zeros(6)
+        ctrl = np.random.uniform(-20000, 20000, 6)
+        # ctrl = np.zeros(6)
         now = time.perf_counter()
         # print(now-start)
 
@@ -98,7 +100,7 @@ with mujoco.viewer.launch_passive(model, data) as viewer:
         
         predicted_eta = predicted_state[:6]
         predicted_v = predicted_state[6:]
-        print(predicted_eta)
+        # print(predicted_eta)
         # Predict based on controller input
         new_state = forward_dynamics(predicted_eta, predicted_v, ctrl, dt, m, Ix, Iy, Iz, W, B, params)
         # print(new_state)
@@ -112,12 +114,13 @@ with mujoco.viewer.launch_passive(model, data) as viewer:
         goal_states.append(predicted_state.copy())
 
         true_state = np.concatenate([sub.telemetry.pos(), sub.telemetry.rot()]).tolist()
+
         true_states.append(true_state)
         t.append(sim_time)
 
         viewer.sync()
         
-        if now - start > 20:
+        if now - start > 10:
             break
         count +=1 
         sim_time += dt

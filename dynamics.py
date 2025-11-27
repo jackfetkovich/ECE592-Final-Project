@@ -6,6 +6,16 @@ from numba import int64, float64, boolean
 from numba import njit
 from transform import *
 
+@njit("float64[:,:](float64[:], float64, float64, float64, float64)")
+def Crb(v, m, Ix, Iy, Iz): 
+    return np.array([
+        [0, 0, 0, 0, v[2], 0],
+        [0, 0, 0, -m * v[2], 0, 0],
+        [0, 0, 0, m*v[1], -m*v[1], 0],
+        [0, m*v[2], -m*v[1], 0, Iz * v[5], -Iy*v[4]],
+        [-m*v[2], 0, -m*v[0], -Iz * v[5], 0, Ix*v[3]],
+        [-m*v[1], -m*v[0], 0, Iy*v[4], -Ix*v[3], 0]
+    ])
 
 @njit
 def inertia_box_radii(m, Ix, Iy, Iz):
@@ -25,6 +35,9 @@ def fluid_forces_inertia_model(v_body, omega_body,
     """
 
     rx, ry, rz = inertia_box_radii(m, Ix, Iy, Iz)
+    # rx = 2*rx
+    # ry = 2*ry
+    # rz = 2*rz
     req = (rx + ry + rz) / 3.0
 
     r = np.array((rx, ry, rz))
@@ -89,6 +102,7 @@ def r_b_to_n(phi, theta, psi):
         [-s(theta), c(theta)*s(phi), c(theta)*c(phi)]
     ])
 
+
 @njit("float64[:](float64[:], float64, float64)")
 def g(eta, W, B): 
     # With z-up world:
@@ -112,7 +126,7 @@ def forward_dynamics(eta, v, tau, dt, m, Ix, Iy, Iz, W, B, params):
     tau_fluid = fluid_forces_inertia_model(v_lin, v_ang,
                                            m, Ix, Iy, Iz,
                                            1000, 0.000001)
-    v_dot = np.linalg.inv(params.Mrb) @ (tau - g(eta, W, B) + tau_fluid)
+    v_dot = np.linalg.inv(params.Mrb) @ (tau - g(eta, W, B) + Crb(v, m, Ix, Iy, Iz)@v + tau_fluid)
     v = v + v_dot * dt
     eta_dot = J(eta) @ v
     eta_next = eta[0:6] + eta_dot * dt
