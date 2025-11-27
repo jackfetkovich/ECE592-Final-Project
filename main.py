@@ -34,7 +34,7 @@ rho = 1000
 W = m*grav
 B = rho * grav * vol
 
-eta = np.array([0, 0, 5, 0, 0, 0])
+eta = np.array([0.0, 0.0, 5.0, 0.0, 0.0, 0.0])
 v = np.zeros(6)
 Mrb = np.diag([m, m, m, Ix, Iy, Iz])
 
@@ -74,6 +74,7 @@ sim_time = 0
 # ctrl = np.zeros(6)
 count = 0
 start = time.perf_counter()
+ctrl = np.array([200.0,0.0,0.0,0.0,0.0,0.0])
 with mujoco.viewer.launch_passive(model, data) as viewer:
     dt = model.opt.timestep
     while viewer.is_running():
@@ -82,7 +83,6 @@ with mujoco.viewer.launch_passive(model, data) as viewer:
         print(now-start)
 
         #  Apply static input
-        ctrl = np.array([200,0,0,0,0,0], dtype=np.float64)
 
         # if count % 100 == 0:
         #     ctrl = mppi(sub.telemetry.x(), traj, sim_time, 2500, 20, 1, 0.01, m, Ix, Iy, Iz, W, B, params)
@@ -97,7 +97,7 @@ with mujoco.viewer.launch_passive(model, data) as viewer:
         predicted_v = predicted_state[6:]
 
         # Predict based on controller input
-        new_state = forward_dynamics(predicted_eta, predicted_v, ctrl, dt, m, Ix, Iy, Iz, W, B, params)
+        new_state = forward_dynamics(predicted_eta, sub.v, ctrl, dt, m, Ix, Iy, Iz, W, B, params)
 
         # Save predicted and true measurements
 
@@ -113,7 +113,7 @@ with mujoco.viewer.launch_passive(model, data) as viewer:
 
         viewer.sync()
         
-        if now - start > 60:
+        if now - start > 20:
             break
         count +=1 
         sim_time += dt

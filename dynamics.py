@@ -39,7 +39,7 @@ def g(eta, W, B):
         0
     ])
 
-@njit
+# @njit
 def forward_dynamics(eta, v, tau, dt, m, Ix, Iy, Iz, W, B, params):
     v_dot = np.linalg.inv(params.Mrb + params.Ma) @ (tau - g(eta, W, B) - (Crb(v, m, Ix, Iy, Iz)@v + Ca(v)@v + D(v)@v))
     v = v + v_dot * dt
@@ -76,28 +76,39 @@ def omega_to_world(phi, theta, psi):
         [0, s(phi)/c(theta), c(phi)/c(theta)]
     ])
 
-@njit
+# @njit
 def J(eta):
-    phi   = eta[3]
+    # phi   = eta[3]
+    # theta = eta[4]
+    # psi   = eta[5]
+
+    # rbn = r_b_to_n(phi, theta, psi)        # 3×3
+    # T   = omega_to_world(phi, theta, psi)  # 3×3
+
+    # Jmat = np.zeros((6, 6))
+
+    # # Top-left block = rbn
+    # for i in range(3):
+    #     for j in range(3):
+    #         Jmat[i, j] = rbn[i, j]
+
+    # # Bottom-right block = T
+    # for i in range(3):
+    #     for j in range(3):
+    #         Jmat[i+3, j+3] = T[i, j]
+
+    # return Jmat
+    phi = eta[3]
     theta = eta[4]
-    psi   = eta[5]
-
-    rbn = r_b_to_n(phi, theta, psi)        # 3×3
-    T   = omega_to_world(phi, theta, psi)  # 3×3
-
-    Jmat = np.zeros((6, 6))
-
-    # Top-left block = rbn
-    for i in range(3):
-        for j in range(3):
-            Jmat[i, j] = rbn[i, j]
-
-    # Bottom-right block = T
-    for i in range(3):
-        for j in range(3):
-            Jmat[i+3, j+3] = T[i, j]
-
-    return Jmat
+    psi = eta[5]
+    rbn = r_b_to_n(phi, theta, psi) # Convert to z up, rotate to accomodate y being the forward axis
+    T = omega_to_world(phi, theta, psi)
+    zeros = np.zeros((3,3))
+    
+    return np.block([
+        [rbn, zeros],
+        [zeros, T]
+    ])
 
 @njit
 def concat1d(a, b):
