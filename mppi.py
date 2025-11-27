@@ -5,13 +5,26 @@ from numba.experimental import jitclass
 from numba import njit
 from transform import *
 from dynamics import *
+import csv
+
+allocation_matrix = -np.array([
+    [-0.4472, -0.4472, 0, 0, -0.4472, -0.4472, 0, 0],
+    [0.8944, -0.8944, 0, 0, 0.8944, -0.8944, 0, 0],
+    [0, 0, 1, 1, 0, 0, 1, 1],
+    [0, 0, -0.2828, -0.2828, 0, 0, 0.2828, 0.2828],
+    [0, 0, 0.2828, -0.2828, 0, 0, -0.2828, 0.2828],
+    [0.4472, -0.4472, 0, 0, -0.4472, 0.4472, 0, 0]
+])
+
+filename = "./debug_data/mppi_debug.csv"
+
 
 def mppi_mujoco_parallel(x_init, traj, time, K, T, lam, dt, model_headless, data_headless):    
     # Preallocate candidate control sequences
-    means = np.array([0,0,1600,0,0,0])
-    sigmas = np.array([600,600,600,25,25,25])
+    means = np.array([0,0,992,0,0,0])
+    sigmas = np.array([0,0,200,0,0,0])
     
-    U = np.random.normal(loc=means, scale=sigmas, size=(K,T,6))
+    U = gen_normal_control_seq(means, sigmas, K, T)
     
     # Discretize trajectory
     targets = np.zeros((T, 6))
@@ -28,22 +41,30 @@ def mppi_mujoco_parallel(x_init, traj, time, K, T, lam, dt, model_headless, data
         data_headless.qpos[:6] = x_init[:6]
         data_headless.qvel[:6] = x_init[6:]
         mujoco.mj_forward(model_headless, data_headless)
+        print(U[k, :])
         
         for t in range(T):
-            data_headless.ctrl[:6] = U[k,t]
+            data_headless.ctrl[:8] = np.linalg.pinv(allocation_matrix) @ U[k,t]
             mujoco.mj_step(model_headless, data_headless)
             
             x_t = data_headless.qpos[:6].copy()
             u_t = U[k,t]
-            costs[k] += cost_function(x_t, u_t, targets[t])
+            this_cost = cost_function(x_t, u_t, targets[t])
+
+            costs[k] += this_cost
+        with open(filename, 'a', newline='', encoding='utf-8') as file:
+            writer = csv.writer(file)
+            writer.writerow([x_t[2], targets[t,2], abs(targets[t,2] - x_t[2]), this_cost])
         
         costs[k] += terminal_cost(data_headless.qpos[:6], targets[-1])
+        print(costs[k])
     
     # Compute weights
     weights = np.exp(-(costs - np.min(costs))/lam)
     sum_weights = np.sum(weights)
     if sum_weights < 1e-10:
         weights = np.ones_like(weights)/len(weights)
+        print("NUMERICAL ISSUE")
     else:
         weights /= sum_weights
     
@@ -132,8 +153,8 @@ def mppi(x_init, traj, time, K, T, lam, dt, m, Ix, Iy, Iz, W, B, params):
 # Cost function
 @njit
 def cost_function(x, u, target):
-    Q = np.diag(np.array([10.0, 10.0, 300.0, 2.0, 2.0, 2.0]))  # State costs
-    R = np.diag(np.array([0.001,0.001, 0.001, 0.001, 0.001, 0.0001]))  # Input costs
+    Q = np.diag(np.array([0.0,0.0, 10.0, 0.0, 0.0, 0.0]))  # State costs
+    R = np.diag(np.array([0.00000001,0.00000001, 0.00000001, 0.00000001, 0.00000001, 0.00000001]))  # Input costs
 
     x_des = np.array([target[0], target[1], target[2], target[3], target[4], target[5]])
     state_diff = x_des - x
@@ -148,7 +169,7 @@ def cost_function(x, u, target):
 # Terminal Cost Function
 @njit
 def terminal_cost(x, target):
-    Q = np.diag(np.array([12.0, 12.0, 300.0, 2.0, 2.0, 2.0]))  # State costs
+    Q = np.diag(np.array([0.0, 0.0, 10.0, 0.0, 0.0, 0.0]))  # State costs
     x_des = np.array([target[0], target[1], target[2], target[3], target[4], target[5]])
     state_diff = x_des - x
     for i in range(3, 6, 1):

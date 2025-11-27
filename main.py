@@ -11,9 +11,15 @@ from mppi import *
 from mppi import mppi_mujoco_parallel
 from trajectory import Trajectory
 from dynamics import *
+import csv
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 xml_path = os.path.join(BASE_DIR, "project.xml")
+
+filename = "./debug_data/mppi_debug.csv"
+with open(filename, 'w', newline='', encoding='utf-8') as file:
+        writer = csv.writer(file)
+        writer.writerow(['pos', 'target', 'dist_from_goal','cost'])
 
 
 model = mujoco.MjModel.from_xml_path(xml_path)
@@ -48,7 +54,7 @@ sub = Sub(eta, v, iface, telemetry, params)
 
 waypoints = np.array([
     [0.0,0.0,5.0,0.0,0.0,0.0, 0.0],
-    [0.0,0.0,8.0,0.0,0.0,0.0, 4.0],
+    [0.0,0.0,8.0,0.0,0.0,0.0, 2.0],
     [0.0,0.0,8.0,0.0,0.0,0.0, 8.0],
     [0.0,0.0,5.0,0.0,0.0,0.0, 12.0]
 ])
@@ -87,7 +93,7 @@ sim_time = 0
 
 count = 0
 start = time.perf_counter()
-ctrl = np.array([300.0,0.0,0.0,0.0,0.0,0.0])
+# ctrl = np.array([300.0,0.0,0.0,0.0,0.0,0.0])
 with mujoco.viewer.launch_passive(model, data) as viewer:
     dt = model.opt.timestep
     while viewer.is_running():
@@ -103,10 +109,10 @@ with mujoco.viewer.launch_passive(model, data) as viewer:
                 np.concatenate([sub.eta, sub.v]),
                 traj,
                 sim_time,
-                K=200,            # candidate trajectories
-                T=20,              # horizon
-                lam=1.0,
-                dt=model.opt.timestep,
+                K=2000,            # candidate trajectories
+                T=13,              # horizon
+                lam=0.1,
+                dt=0.01,
                 model_headless=model_headless,
                 data_headless=data_headless
             )
