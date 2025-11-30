@@ -54,7 +54,7 @@ sub = Sub(eta, v, iface, telemetry, params)
 
 waypoints = np.array([
     [0.0,0.0,5.0,0.0,0.0, 0, 0.0],
-    [0.0,0.0,5.0,0.0,0.0,-np.pi/2, 3.0],
+    [-1.0,2.0,5.0,0.0,0.0,-np.pi/4, 3.0],
 ])
 
 traj = Trajectory(waypoints)
@@ -67,10 +67,11 @@ def warmup():
     print("Warming up...")
     # mppi(np.concat([eta, np.zeros(6)]), traj, 0.15, 1000, 12, 1, 0.1, m, Ix, Iy, Iz, W, B, params)
     mppi_mujoco_parallel(
-        np.concatenate([eta, np.zeros(6)]),  # initial state [eta | v]
+        np.zeros(7),  # initial state [eta | v]
+        np.zeros(6),
         traj,
         0.15,                                # starting time
-        K=50,                                # small number for warmup
+        K=2,                                # small number for warmup
         T=12,
         lam=1.0,
         dt=model.opt.timestep,
@@ -104,13 +105,14 @@ with mujoco.viewer.launch_passive(model, data) as viewer:
         if count % 100 == 0:
         #     ctrl = mppi(sub.telemetry.x(), traj, sim_time, 2500, 20, 1, 0.01, m, Ix, Iy, Iz, W, B, params)
             ctrl = mppi_mujoco_parallel(
-                np.concatenate([sub.eta, sub.v]),
+                data.qpos[:7],
+                data.qvel[:6],
                 traj,
                 sim_time,
                 K=800,            # candidate trajectories
-                T=35,              # horizon
+                T=50,              # horizon
                 lam=0.01,
-                dt=0.1,
+                dt=model_headless.opt.timestep,
                 model_headless=model_headless,
                 data_headless=data_headless
             )

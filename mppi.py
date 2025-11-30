@@ -19,42 +19,46 @@ allocation_matrix = -np.array([
 filename = "./debug_data/mppi_debug.csv"
 
 
-def mppi_mujoco_parallel(x_init, traj, time, K, T, lam, dt, model_headless, data_headless):    
+def mppi_mujoco_parallel(x_init, v_init, traj, time, K, T, lam, dt, model_headless, data_headless):    
     # Preallocate candidate control sequences
     means = np.array([0,0,223,0,0,0])
-    sigmas = np.array([1000,1000,1000,0.0,0.0,800.0])
+    sigmas = np.array([1000,1000,1000,0.0,0.0,300.0])
     
-    U = gen_normal_control_seq(means, sigmas, K, T)
+    U = means + sigmas * np.random.randn(K, T, 6)
+    alloc_inv = np.linalg.pinv(allocation_matrix)
     
     # Discretize trajectory
     targets = np.zeros((T, 6))
     for t in range(T):
         targets[t] = traj.sample_trajectory(time + t*dt)
+
+    print(data_headless.qpos[5])
     
     # Preallocate costs
     costs = np.zeros(K)
-    print(targets)
     # Parallel loop: candidate trajectories
     for k in range(K):
+
+
         # Reset headless MuJoCo for this trajectory
         mujoco.mj_resetData(model_headless, data_headless)
-        data_headless.qpos[:6] = x_init[:6]
-        data_headless.qvel[:6] = x_init[6:]
+        data_headless.qpos[:7] = x_init
+        data_headless.qvel[:6] = v_init
         mujoco.mj_forward(model_headless, data_headless)
         # print(U[k, :])
         
         for t in range(T):
-            data_headless.ctrl[:8] = np.linalg.pinv(allocation_matrix) @ U[k,t]
+            data_headless.ctrl[:8] = alloc_inv @ U[k,t]
             mujoco.mj_step(model_headless, data_headless)
             
-            x_t = data_headless.qpos[:6].copy()
+            x_t = data_headless.qpos[:7].copy()
             u_t = U[k,t]
             this_cost = cost_function(x_t, u_t, targets[t])
 
             costs[k] += this_cost
-        with open(filename, 'a', newline='', encoding='utf-8') as file:
-            writer = csv.writer(file)
-            writer.writerow([x_t[2], targets[t,2], abs(targets[t,2] - x_t[2]), this_cost])
+        # with open(filename, 'a', newline='', encoding='utf-8') as file:
+        #     writer = csv.writer(file)
+        #     writer.writerow([x_t[2], targets[t,2], abs(targets[t,2] - x_t[2]), this_cost])
         
         costs[k] += terminal_cost(data_headless.qpos[:6], targets[-1])
         # print(costs[k])
@@ -72,6 +76,7 @@ def mppi_mujoco_parallel(x_init, traj, time, K, T, lam, dt, model_headless, data
     
     # Weighted sum of control sequences
     u_star = np.sum(weights[:, None, None]*U, axis=0)
+    print (u_star[0, 5])
     return u_star[0]
 
 
@@ -103,57 +108,11 @@ def mujoco_rollout(model, data, eta_init, v_init, U, dt):
         trajectory[t+1, 6:] = data.qvel[:6].copy()
         
     return trajectory
-# ------------------------------------------------------------------------------------
-# OLD MPPI
-# ------------------------------------------------------------------------------------
-@njit
-def mppi(x_init, traj, time, K, T, lam, dt, m, Ix, Iy, Iz, W, B, params):
-    means = np.array([0, 0, 1200, 0, 0, 0])
-    sigmas = np.array([600, 600, 600, 25, 25, 25])
-    X_calc = np.zeros((K, T + 1, 12))
-
-    U = gen_normal_control_seq(means, sigmas, K, T)
-
-    targets = np.zeros((T, 6)) # Discretize path for computation
-    for i in range(T):
-        targets[i] = traj.sample_trajectory(time + i * dt)
-
-    for k in range(K):
-        X_calc[k, 0, :] =  x_init # Initialize all trajectories with the current state
-            
-    costs = np.zeros(K) # initialize all costs
-    for k in range(K):
-        for t in range(len(targets)-1):
-            u_nom = U[k,t]
-            X_calc[k, t + 1, :] = forward_dynamics(X_calc[k, t, 0:6], X_calc[k, t, 6:], u_nom, dt, m, Ix, Iy, Iz, W, B, params)
-                   
-            current_target = targets[t]
-            cost = cost_function(X_calc[k, t+1, 0:6], u_nom, current_target)
-            costs[k] += cost
-        
-        final_target = targets[-1]    
-        terminal_cost_val = terminal_cost(X_calc[k, T, 0:6], final_target) #Terminal cost of final state
-        costs[k] += terminal_cost_val
-        
-        
-    # Calculate weights for each trajectory
-    weights = np.exp(-(costs - np.min(costs)) / lam)
-    sum_weights = np.sum(weights)
-    if sum_weights < 1e-10:
-        weights = np.ones_like(weights) / len(weights)  # fallback to uniform
-    else:
-        weights /= sum_weights
-    
-    traj_weight_single = np.zeros(K)
-    traj_weight_single[:] = weights
-
-    # Compute the weighted sum of control inputs
-    u_star = np.sum(weights[:, None, None] * U, axis=0)
-    return u_star[0]
 
 # Cost function
-@njit
-def cost_function(x, u, target):
+
+def cost_function(x_in, u, target):
+    x = np.concatenate([x_in[:3],quat_to_euler_xyz(x_in[4:])])
     Q = np.diag(np.array([10.0,10.0, 10.0, 0.0, 0.0, 8.0]))  # State costs
     # R = np.diag(np.array([0.0000000000001,0.0000000000001, 0.0000000000001, 0.0000000000001, 0.0000000000001, 0.0000000000001]))  # Input costs
     R = np.zeros((6,6))
@@ -169,8 +128,9 @@ def cost_function(x, u, target):
     return cost
 
 # Terminal Cost Function
-@njit
-def terminal_cost(x, target):
+
+def terminal_cost(x_in, target):
+    x = np.concatenate([x_in[:3], quat_to_euler_xyz(x_in[4:])])
     Q = np.diag(np.array([12.0, 12.0, 12.0, 0.0, 0.0,10.0]))  # State costs
     x_des = np.array([target[0], target[1], target[2], target[3], target[4], target[5]])
     state_diff = x_des - x

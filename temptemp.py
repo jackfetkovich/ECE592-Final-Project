@@ -82,7 +82,7 @@ with mujoco.viewer.launch_passive(model, data) as viewer:
     dt = model.opt.timestep
     while viewer.is_running():
        
-        ctrl = np.array([0,0,223,0,0,1000])
+        ctrl = np.array([0,-100,223,100,0,0])
         print(sub.telemetry.rot()[2])
         # ctrl = np.zeros(6)
         now = time.perf_counter()
