@@ -21,9 +21,8 @@ filename = "./debug_data/mppi_debug.csv"
 
 def mppi_mujoco_parallel(x_init, traj, time, K, T, lam, dt, model_headless, data_headless):    
     # Preallocate candidate control sequences
-    hover = 992
-    means = np.array([0,0,992,0,0,0])
-    sigmas = np.array([1000,0,1000,0,0,0])
+    means = np.array([0,0,223,0,0,0])
+    sigmas = np.array([1000,1000,1000,0.0,0.0,800.0])
     
     U = gen_normal_control_seq(means, sigmas, K, T)
     
@@ -34,7 +33,7 @@ def mppi_mujoco_parallel(x_init, traj, time, K, T, lam, dt, model_headless, data
     
     # Preallocate costs
     costs = np.zeros(K)
-    
+    print(targets)
     # Parallel loop: candidate trajectories
     for k in range(K):
         # Reset headless MuJoCo for this trajectory
@@ -73,7 +72,6 @@ def mppi_mujoco_parallel(x_init, traj, time, K, T, lam, dt, model_headless, data
     
     # Weighted sum of control sequences
     u_star = np.sum(weights[:, None, None]*U, axis=0)
-    print(u_star[0])
     return u_star[0]
 
 
@@ -156,7 +154,7 @@ def mppi(x_init, traj, time, K, T, lam, dt, m, Ix, Iy, Iz, W, B, params):
 # Cost function
 @njit
 def cost_function(x, u, target):
-    Q = np.diag(np.array([10.0,0.0, 10.0, 0.0, 0.0, 0.0]))  # State costs
+    Q = np.diag(np.array([10.0,10.0, 10.0, 0.0, 0.0, 8.0]))  # State costs
     # R = np.diag(np.array([0.0000000000001,0.0000000000001, 0.0000000000001, 0.0000000000001, 0.0000000000001, 0.0000000000001]))  # Input costs
     R = np.zeros((6,6))
 
@@ -173,7 +171,7 @@ def cost_function(x, u, target):
 # Terminal Cost Function
 @njit
 def terminal_cost(x, target):
-    Q = np.diag(np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0]))  # State costs
+    Q = np.diag(np.array([12.0, 12.0, 12.0, 0.0, 0.0,10.0]))  # State costs
     x_des = np.array([target[0], target[1], target[2], target[3], target[4], target[5]])
     state_diff = x_des - x
     for i in range(3, 6, 1):

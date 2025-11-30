@@ -39,7 +39,7 @@ def trfm(x, y, z, phi, theta, psi):
     ])
 
 @njit
-def quat_to_euler_zyx(q):
+def quat_to_euler_xyz(q):
     # q = [w, x, y, z]
     w = q[0]
     x = q[1]
@@ -69,9 +69,9 @@ def quat_to_euler_zyx(q):
 
     # ---- output ----
     out = np.zeros(3)
-    out[0] = yaw
+    out[2] = yaw
     out[1] = pitch
-    out[2] = roll
+    out[0] = roll
     return out
 
 @njit

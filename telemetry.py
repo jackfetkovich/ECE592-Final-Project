@@ -12,7 +12,7 @@ class Telemetry:
     
     def rot(self):
         tfm = self.data.xmat[self.body_id].reshape(3,3)
-        return quat_to_euler_zyx(self.data.sensordata[3:7])
+        return quat_to_euler_xyz(self.data.sensordata[3:7])
     
     def vel(self):
         tfm = self.data.xmat[self.body_id].reshape(3,3)

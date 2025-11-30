@@ -53,10 +53,8 @@ params = SubParams(Mrb, Ma)
 sub = Sub(eta, v, iface, telemetry, params)
 
 waypoints = np.array([
-    [0.0,0.0,5.0,0.0,0.0,0.0, 0.0],
-    [1.0,0.0,8.0,0.0,0.0,0.0, 3.0],
-    [0.0,0.0,8.0,0.0,0.0,0.0, 8.0],
-    [0.0,0.0,5.0,0.0,0.0,0.0, 12.0]
+    [0.0,0.0,5.0,0.0,0.0, 0, 0.0],
+    [0.0,0.0,5.0,0.0,0.0,-np.pi/2, 3.0],
 ])
 
 traj = Trajectory(waypoints)
@@ -110,13 +108,13 @@ with mujoco.viewer.launch_passive(model, data) as viewer:
                 traj,
                 sim_time,
                 K=800,            # candidate trajectories
-                T=50,              # horizon
+                T=35,              # horizon
                 lam=0.01,
                 dt=0.1,
                 model_headless=model_headless,
                 data_headless=data_headless
             )
-
+        
         # Apply controller input
         sub.control(ctrl)
         mujoco.mj_step(model, data)
@@ -140,7 +138,7 @@ with mujoco.viewer.launch_passive(model, data) as viewer:
         viewer.sync()
         
         # simulation length
-        if now - start > 120:
+        if sim_time >= 3.0:
             break
         count +=1 
         sim_time += dt
