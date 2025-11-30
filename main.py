@@ -16,12 +16,7 @@ import csv
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 xml_path = os.path.join(BASE_DIR, "project.xml")
 
-filename = "./debug_data/mppi_debug.csv"
-with open(filename, 'w', newline='', encoding='utf-8') as file:
-        writer = csv.writer(file)
-        writer.writerow(['pos', 'target', 'dist_from_goal','cost'])
-
-
+# Init Mujoco
 model = mujoco.MjModel.from_xml_path(xml_path)
 data = mujoco.MjData(model)
 mujoco.mj_resetData(model, data)
@@ -52,9 +47,11 @@ params = SubParams(Mrb, Ma)
 
 sub = Sub(eta, v, iface, telemetry, params)
 
+# Trajectory Waypoints (x, y, z, roll, pitch, yaw, time)
 waypoints = np.array([
     [0.0,0.0,5.0,0.0,0.0, 0, 0.0],
-    [-1.0,2.0,5.0,0.0,0.0,-np.pi/4, 3.0],
+    [1.0,0.0,5.0,0.0,0.0,np.pi/2, 3.0],
+    [1.0,1.0,5.0,0.0,0.0,-np.pi/2, 5.0],
 ])
 
 traj = Trajectory(waypoints)
@@ -65,7 +62,6 @@ data_headless = mujoco.MjData(model_headless)
 
 def warmup():
     print("Warming up...")
-    # mppi(np.concat([eta, np.zeros(6)]), traj, 0.15, 1000, 12, 1, 0.1, m, Ix, Iy, Iz, W, B, params)
     mppi_mujoco_parallel(
         np.zeros(7),  # initial state [eta | v]
         np.zeros(6),
@@ -92,18 +88,18 @@ sim_time = 0
 
 count = 0
 start = time.perf_counter()
-# ctrl = np.array([300.0,0.0,0.0,0.0,0.0,0.0])
+
+# Main simulation loop
 with mujoco.viewer.launch_passive(model, data) as viewer:
     dt = model.opt.timestep
     while viewer.is_running():
        
         now = time.perf_counter()
-        # print(now-start)
 
         #  Apply static input
 
+        # Run controller @ 10Hz
         if count % 100 == 0:
-        #     ctrl = mppi(sub.telemetry.x(), traj, sim_time, 2500, 20, 1, 0.01, m, Ix, Iy, Iz, W, B, params)
             ctrl = mppi_mujoco_parallel(
                 data.qpos[:7],
                 data.qvel[:6],
@@ -121,14 +117,11 @@ with mujoco.viewer.launch_passive(model, data) as viewer:
         sub.control(ctrl)
         mujoco.mj_step(model, data)
 
-        # goal_state = traj.sample_trajectory(sim_time)
-
+        # Sample state and desired trajectory for logging
         actual_eta = actual_state[:6]
         actual_v = actual_state[6:]
 
         actual_state = np.concatenate([sub.telemetry.pos(), sub.telemetry.rot()]).astype(np.float64)
-
-        # goal_states.append(goal_state)
         actual_states.append(actual_state.copy())
 
         # desired state from defined trajectory
@@ -140,53 +133,75 @@ with mujoco.viewer.launch_passive(model, data) as viewer:
         viewer.sync()
         
         # simulation length
-        if sim_time >= 3.0:
+        if sim_time >= 5.0:
             break
         count +=1 
         sim_time += dt
         time.sleep(dt)
 
     
-# predicted_states = np.array(goal_states)
+
+## POST SIMULATION PLOTTING ##
+
 actual_states = np.array(actual_states)
-
-# true_states = np.array(true_states)
 desired_states = np.array(desired_states)
-# print(sim_time)
 
+# Plot X
 plt.subplot(231)
-# plt.plot(t, predicted_states[:, 0], label="Predicted")
 plt.plot(t, actual_states[:, 0], label="Actual")
-
-# plt.plot(t, true_states[:, 0], label="Measured")
 plt.plot(t, desired_states[:, 0], label="Desired")
-
+plt.title("X")
+plt.xlabel("t(s)")
+plt.ylabel("x(m)")
 plt.legend()
 
+
+# Plot Y
 plt.subplot(232)
-# plt.plot(t, predicted_states[:, 1])
 plt.plot(t, actual_states[:, 1])
 plt.plot(t, desired_states[:, 1])
+plt.title("Y")
+plt.xlabel("t(s)")
+plt.ylabel("y(m)")
+plt.legend()
 
+
+# Plot Z
 plt.subplot(233)
-# plt.plot(t, predicted_states[:, 2])
 plt.plot(t, actual_states[:, 2])
 plt.plot(t, desired_states[:, 2])
+plt.title("Z")
+plt.xlabel("t(s)")
+plt.ylabel("z(m)")
+plt.legend()
 
+
+# Plot Roll
 plt.subplot(234)
-# plt.plot(t, predicted_states[:, 3])
 plt.plot(t, actual_states[:, 3])
 plt.plot(t, desired_states[:, 3])
+plt.title("Roll")
+plt.xlabel("t(s)")
+plt.ylabel("Roll(rad)")
+plt.legend()
 
+# Plot Pitch
 plt.subplot(235)
-# plt.plot(t, predicted_states[:, 4])
 plt.plot(t, actual_states[:, 4])
 plt.plot(t, desired_states[:, 4])
+plt.title("Pitch")
+plt.xlabel("t(s)")
+plt.ylabel("Pitch(rad)")
+plt.legend()
 
+# Plot Yaw
 plt.subplot(236)
-# plt.plot(t, predicted_states[:, 5])
 plt.plot(t, actual_states[:, 5])
 plt.plot(t, desired_states[:, 5])
+plt.title("Yaw")
+plt.xlabel("t(s)")
+plt.ylabel("Yaw(rad)")
+plt.legend()
 
 plt.show()
 
