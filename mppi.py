@@ -22,7 +22,7 @@ filename = "./debug_data/mppi_debug.csv"
 def mppi_mujoco_parallel(x_init, v_init, traj, time, K, T, lam, dt, model_headless, data_headless):    
     # Preallocate candidate control sequences
     means = np.array([0,0,223,0,0,0])
-    sigmas = np.array([1000,1000,1000,0.0,0.0,300.0])
+    sigmas = np.array([1000,1000,1000,0.0,0.0,600.0])
     
     U = means + sigmas * np.random.randn(K, T, 6)
     alloc_inv = np.linalg.pinv(allocation_matrix)
@@ -32,7 +32,6 @@ def mppi_mujoco_parallel(x_init, v_init, traj, time, K, T, lam, dt, model_headle
     for t in range(T):
         targets[t] = traj.sample_trajectory(time + t*dt)
 
-    print(data_headless.qpos[5])
     
     # Preallocate costs
     costs = np.zeros(K)
@@ -112,7 +111,7 @@ def mujoco_rollout(model, data, eta_init, v_init, U, dt):
 # Cost function
 
 def cost_function(x_in, u, target):
-    x = np.concatenate([x_in[:3],quat_to_euler_xyz(x_in[4:])])
+    x = np.concatenate([x_in[:3],quat_to_euler_xyz(x_in[3:7])])
     Q = np.diag(np.array([10.0,10.0, 10.0, 0.0, 0.0, 8.0]))  # State costs
     # R = np.diag(np.array([0.0000000000001,0.0000000000001, 0.0000000000001, 0.0000000000001, 0.0000000000001, 0.0000000000001]))  # Input costs
     R = np.zeros((6,6))
@@ -130,7 +129,7 @@ def cost_function(x_in, u, target):
 # Terminal Cost Function
 
 def terminal_cost(x_in, target):
-    x = np.concatenate([x_in[:3], quat_to_euler_xyz(x_in[4:])])
+    x = np.concatenate([x_in[:3], quat_to_euler_xyz(x_in[3:7])])
     Q = np.diag(np.array([12.0, 12.0, 12.0, 0.0, 0.0,10.0]))  # State costs
     x_des = np.array([target[0], target[1], target[2], target[3], target[4], target[5]])
     state_diff = x_des - x
