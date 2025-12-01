@@ -1,48 +1,64 @@
 <mujoco model="course">
+    <!-- Simulation Options -->
+    <option timestep="0.0001" density="1000" viscosity="1e-6" cone="elliptic" noslip_iterations="3"/>
 
-  <option timestep="0.0001" density="1000" viscosity="1e-6" cone="elliptic" noslip_iterations="3"/>
-  
-  <include file="go2.xml"/>
+    <!-- Load external assets -->
+    <include file="project.xml"/>
 
+    <asset>
+    <!-- Floor Asset Definition -->
+      <texture name="grid" type="2d" builtin="checker" rgb1=".1 .2 .3"
+      rgb2=".2 .3 .4" width="300" height="300" mark="edge" markrgb=".2 .3 .4"/>
+      <material name="grid" texture="grid" texrepeat="2 2" texuniform="true"
+      reflectance=".2"/>
+    </asset>
 
+    <worldbody>
+        <!-- Lighting & environment -->
+        
+        <!-- Key Sun Light -->
+        <light name="sun" type="directional" dir="-0.3 -0.2 -1" diffuse="1 1 1"
+          specular="0.3 0.3 0.3" castshadow="true" />
 
-  <statistic center="0 0 0.1" extent="0.8"/>
-  
-  <visual>
-    <headlight diffuse="0.6 0.6 0.6" ambient="0.3 0.3 0.3" specular="0 0 0"/>
-    <rgba haze="0.15 0.25 0.35 1"/>
-    <global azimuth="-130" elevation="-20"/>
-  </visual>
+        <!-- Fill Light from front -->
+        <light name="fill1"  pos="2 2 4" diffuse="0.6 0.7 0.8" specular="0.2 0.2 0.2" />
 
-  <asset>
-    <texture type="skybox" builtin="gradient" rgb1="0.3 0.5 0.7" rgb2="0 0 0" width="512" height="3072"/>
-    <texture type="2d" name="groundplane" builtin="checker" mark="edge" rgb1="0.2 0.3 0.4" rgb2="0.1 0.2 0.3"
-      markrgb="0.8 0.8 0.8" width="300" height="300"/>
-    <material name="groundplane" texture="groundplane" texuniform="true" texrepeat="5 5" reflectance="0.2"/>
-  </asset>
+        <!-- Fill Light from opposite side -->
+        <light name="fill2"  pos="-2 -2 3" diffuse="0.4 0.5 0.6" specular="0.1 0.1 0.1" />
 
-  <worldbody>
-    <light pos="0 0 1.5" dir="0 0 -1" directional="true"/>
-    <geom name="floor" size="0 0 0.05" type="plane" material="groundplane"/>
+        <!-- Inserting the floor grid -->
+        <geom size="20 20 .01" type="plane" material="grid"/>
 
-    <!-- <geom pos="1.2 0 0.04" type="box"  size="0.1 2 0.04" quat="1.0 0 0 0"/>
-    <geom pos="1.6 0 0.04" type="box"  size="0.1 2 0.04" quat="1.0 0 0 0"/>
+        <!-- Insert the AUV -->
+        <include file="auv.xml"/>
+ 
 
-    <geom pos="2.3 0 0.02" type="box"  size="0.2 2 0.15" quat="1.0 0 0 0"/>
-    <geom pos="2.6 0 0.02" type="box"  size="0.22 2 0.3" quat="1.0 0 0 0"/>
-    <geom pos="2.8 0 0.02" type="box"  size="0.23 2 0.45" quat="1.0 0 0 0"/>
-    <geom pos="3 0 0.02" type="box"  size="0.24 2 0.6" quat="1.0 0 0 0"/>
-    <geom pos="3.2 0 0.02" type="box"  size="0.25 2 0.75" quat="1.0 0 0 0"/>
-    <geom pos="3.4 0 0.02" type="box"  size="0.26 2 0.9" quat="1.0 0 0 0"/> -->
+        <!-- ========= PROPS ========= -->
 
-    <!-- Cylinder -->
-    <!-- <body name="cylinder_body1" pos="1 1 0.02">
-      <geom name="cylinder_geom1" type="cylinder" size="0.7 0.02" pos="0 0 0" rgba="0.2 0.6 0.8 1"/>
-    </body>
-    <body name="cylinder_body2" pos="1.5 -0.5 0.5">
-      <geom name="cylinder_geom2" type="cylinder" size="0.7 0.5" pos="0 0 0" rgba="0.2 0.6 0.8 1"/>
-    </body> -->
+        <!-- Buoy -->
+        <body name="buoy_1" pos="6 0 2.5">
+            <!-- Main Buoy -->
+            <geom type="sphere" size=".3" mass="1" rgba="1 0 0 1" pos="0 0 0"/>
+            <!-- Bouy moore -->
+            <geom type="cylinder" size=".025 1.25" mass=".1" rgba="1 1 1 1" pos="0 0 -1.25"/>
+        </body>
 
-  </worldbody>
+        <!-- Simple Gate (2 vertical posts + cross bar) -->
+        <body name="gate_1" pos="3 3 4">
+            <!-- Left Pole Top-->
+            <geom type="box" size=".05 .05 1" rgba="0 0 0 1" pos="0 3 -1"/>
+            <!-- Left Pole Bottom -->
+            <geom type="box" size=".05 .05 1" rgba="1 0 0 1" pos="0 3 -3"/>
+            <!-- Right Pole -->
+            <geom type="box" size=".05 .05 1" rgba="1 0 0 1" pos="0 -3 -1"/>
+            <!-- Right Pole Bottom -->
+            <geom type="box" size=".05 .05 1" rgba="0 0 0 1" pos="0 -3 -3"/>
+            <!-- Top Bar -->
+            <geom type="box" size=".05 3 .05" rgba="1 1 1 1" pos="0 0 0"/>
+            <!-- Middle Pole -->
+            <geom type="box" size=".05 .05 .5" rgba="1 0 0 1" pos="0 0 -.55"/>
+        </body>
+        
+    </worldbody>
 
 </mujoco>

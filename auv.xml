@@ -1,0 +1,52 @@
+<mujoco model="auv">
+    <!-- SeaWolf IX AUV model -->
+    <body name="SWIX" pos="0 0 5">
+        <site name="imu" pos="0 0 0"/>
+        <freejoint name="SWIX_freejoint"/>
+        <!-- AUV Frame -->
+        <geom name="red_box" type="box" size=".4 .2 .2" rgba="1 0 0 1" pos="0 0 0" mass="22"/>
+
+        <!-- Vertical Thrusters -->
+        <body name="thruster_2" pos=".2 -.3 0">
+            <geom type="cylinder" size=".1 .1" rgba="0 0 0 1" mass=".1"/>
+        </body>
+        <site name="thrust2_site" pos=".2 -.2 0"/>
+        
+        <body name="thruster_3" pos="-.2 -.3 0">
+            <geom type="cylinder" size=".1 .1" rgba="0 0 0 1"  mass=".1"/>
+        </body>
+        <site name="thrust3_site" pos="-.2 -.2 0"/>
+
+        <body name="thruster6" pos="-.2 .3 0">
+            <geom type="cylinder" size=".1 .1" rgba="0 0 0 1" mass=".1"/>
+        </body>
+        <site name="thrust6_site" pos="-.2 .2 0"/>
+
+        <body name="thruster_7" pos=".2 .3 0">
+            <geom type="cylinder" size=".1 .1" rgba="0 0 0 1" mass=".1"/>
+        </body>
+        <site name="thrust7_site" pos=".2 .2 0"/>
+
+        <!-- Diagonal Thrusters -->
+        <body name="thruster_0" pos=".45 .25 0" euler="90 45 0">
+            <geom type="cylinder" size=".1 .1" rgba="0 0 0 1" mass=".1"/>
+        </body>
+        <site name="thrust0_site" pos=".4 .2 0"/>
+
+        <body name="thruster_1" pos=".45 -.25 0" euler="90 135 0">
+            <geom type="cylinder" size=".1 .1" rgba="0 0 0 1" mass=".1"/>
+        </body>
+        <site name="thrust1_site" pos=".4 -.2 0"/>
+
+        <body name="thruster_4" pos="-.45 -.25 0" euler="90 45 0">
+            <geom type="cylinder" size=".1 .1" rgba="0 0 0 1" mass=".1"/>
+        </body>
+        <site name="thrust4_site" pos="-.4 -.2 0"/>         
+                
+        <body name="thruster_5" pos="-.45 .25 0" euler="90 135 0">
+            <geom type="cylinder" size=".1 .1" rgba="0 0 0 1" mass=".1"/>
+        </body>
+        <site name="thrust5_site" pos="-.4 .2 0"/>
+    </body>
+
+</mujoco>

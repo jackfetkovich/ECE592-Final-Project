@@ -14,7 +14,7 @@ from dynamics import *
 import csv
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-xml_path = os.path.join(BASE_DIR, "project.xml")
+xml_path = os.path.join(BASE_DIR, "scene.xml")
 
 # Init Mujoco
 model = mujoco.MjModel.from_xml_path(xml_path)
