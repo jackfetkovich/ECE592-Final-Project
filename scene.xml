@@ -1,8 +1,8 @@
 <mujoco model="course">
-    <!-- Simulation Options -->
+    <!-- Simulation Options: Water Dynamics -->
     <option timestep="0.0001" density="1000" viscosity="1e-6" cone="elliptic" noslip_iterations="3"/>
 
-    <!-- Load external assets -->
+    <!-- Load external assets: actuation and sensors -->
     <include file="project.xml"/>
 
     <asset>
@@ -29,27 +29,26 @@
         <!-- Inserting the floor grid -->
         <geom size="20 20 .01" type="plane" material="grid"/>
 
-        <!-- Insert the AUV -->
+        <!-- Load external assets: insert the AUV -->
         <include file="auv.xml"/>
  
-
         <!-- ========= PROPS ========= -->
 
-        <!-- Buoy -->
+        <!-- Buoy Obstacle-->
         <body name="buoy_1" pos="6 0 2.5">
             <!-- Main Buoy -->
             <geom type="sphere" size=".3" mass="1" rgba="1 0 0 1" pos="0 0 0"/>
-            <!-- Bouy moore -->
+            <!-- Bouy Moore -->
             <geom type="cylinder" size=".025 1.25" mass=".1" rgba="1 1 1 1" pos="0 0 -1.25"/>
         </body>
 
-        <!-- Simple Gate (2 vertical posts + cross bar) -->
+        <!-- Gate Obstacle -->
         <body name="gate_1" pos="3 3 4">
             <!-- Left Pole Top-->
             <geom type="box" size=".05 .05 1" rgba="0 0 0 1" pos="0 3 -1"/>
             <!-- Left Pole Bottom -->
             <geom type="box" size=".05 .05 1" rgba="1 0 0 1" pos="0 3 -3"/>
-            <!-- Right Pole -->
+            <!-- Right Pole Top-->
             <geom type="box" size=".05 .05 1" rgba="1 0 0 1" pos="0 -3 -1"/>
             <!-- Right Pole Bottom -->
             <geom type="box" size=".05 .05 1" rgba="0 0 0 1" pos="0 -3 -3"/>

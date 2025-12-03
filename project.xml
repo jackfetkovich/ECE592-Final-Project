@@ -1,4 +1,5 @@
 <mujoco model="project">
+    <!-- Actuator block to drive robot -->
     <actuator>
         <!-- Front Diagonal Thrusters -->
         <motor name="thrust0" site="thrust0_site" gear=".4472 -.8944 0 0 0 0" />
@@ -15,9 +16,9 @@
         <!-- Left Vertical Thrusters -->
         <motor name="thrust6" site="thrust6_site" gear="0 0 -1 0 0 0" />
         <motor name="thrust7" site="thrust7_site" gear="0 0 -1 0 0 0" />
-
     </actuator>
 
+    <!-- Sensor block to measure orientation -->
     <sensor>
         <framepos name="body_pos" objtype="site" objname="imu"/>
         <framequat name="body_orientation" objtype="site" objname="imu"/>

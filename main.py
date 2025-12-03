@@ -67,11 +67,11 @@ data_headless = mujoco.MjData(model_headless)
 def warmup():
     print("Warming up...")
     mppi_mujoco_parallel(
-        np.zeros(7),  # initial state [eta | v]
+        np.zeros(7),                # initial state [eta | v]
         np.zeros(6),
         traj,
-        0.15,                                # starting time
-        K=2,                                # small number for warmup
+        0.15,                       # starting time
+        K=2,                        # small number for warmup
         T=12,
         lam=1.0,
         dt=model.opt.timestep,
