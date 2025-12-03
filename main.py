@@ -50,8 +50,12 @@ sub = Sub(eta, v, iface, telemetry, params)
 # Trajectory Waypoints (x, y, z, roll, pitch, yaw, time)
 waypoints = np.array([
     [0.0,0.0,5.0,0.0,0.0, 0, 0.0],
-    [1.0,0.0,5.0,0.0,0.0,np.pi/2, 3.0],
-    [1.0,1.0,5.0,0.0,0.0,-np.pi/2, 5.0],
+    [3.0,1.5,3.5,0.0,0.0,0.0, 2.0],
+    [6.0,1.5,2.5,0.0,0.0,-np.pi/2, 4.5],
+    [7.0, 1.0, 2.5, 0.0, 0.0, -3 * np.pi /4, 5.5],
+    [7.5, 0.7, 2.5, 0.0, 0.0, -0.99* np.pi, 6.5],
+    [6.5, -1.0, 2.5, 0.0, 0.0, 3*np.pi/4, 7.5],
+    [6.0, -1.5, 2.5, 0.0, 0.0, np.pi/2, 8.5],
 ])
 
 traj = Trajectory(waypoints)
@@ -89,6 +93,13 @@ sim_time = 0
 count = 0
 start = time.perf_counter()
 
+
+filename = "./debug_data/xyz.csv"
+with open(filename, 'w', newline='', encoding='utf-8') as file:
+        writer = csv.writer(file)
+        writer.writerow(['Time', 'X Desired', 'X Actual','Y Desired', 'Y Actual', 'Z Desired', 'Z Actual',
+                         'Roll Desired', 'Roll Actual','Pitch Desired', 'Pitch Actual', 'Yaw Desired', 'Yaw Actual'])
+
 # Main simulation loop
 with mujoco.viewer.launch_passive(model, data) as viewer:
     dt = model.opt.timestep
@@ -112,28 +123,29 @@ with mujoco.viewer.launch_passive(model, data) as viewer:
                 model_headless=model_headless,
                 data_headless=data_headless
             )
+            actual_state = np.concatenate([sub.telemetry.pos(), sub.telemetry.rot()]).astype(np.float64)
+            actual_states.append(actual_state.copy())
+
+            # desired state from defined trajectory
+            desired_state = traj.sample_trajectory(sim_time)
+            desired_states.append(desired_state)
+
+            t.append(sim_time)
+            with open(filename, 'a', newline='', encoding='utf-8') as file:
+                writer = csv.writer(file)
+                writer.writerow([sim_time, desired_state[0], actual_state[0], desired_state[1], actual_state[1], desired_state[2], actual_state[2],
+                         desired_state[3], actual_state[3], desired_state[4], actual_state[4], desired_state[5], actual_state[5]])
+        
         
         # Apply controller input
         sub.control(ctrl)
         mujoco.mj_step(model, data)
 
-        # Sample state and desired trajectory for logging
-        actual_eta = actual_state[:6]
-        actual_v = actual_state[6:]
-
-        actual_state = np.concatenate([sub.telemetry.pos(), sub.telemetry.rot()]).astype(np.float64)
-        actual_states.append(actual_state.copy())
-
-        # desired state from defined trajectory
-        desired_state = traj.sample_trajectory(sim_time)
-        desired_states.append(desired_state)
-
-        t.append(sim_time)
 
         viewer.sync()
         
         # simulation length
-        if sim_time >= 5.0:
+        if sim_time >= 8.5:
             break
         count +=1 
         sim_time += dt
