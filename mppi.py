@@ -112,9 +112,8 @@ def mujoco_rollout(model, data, eta_init, v_init, U, dt):
 
 def cost_function(x_in, u, target):
     x = np.concatenate([x_in[:3],quat_to_euler_xyz(x_in[3:7])])
-    Q = np.diag(np.array([10.0,10.0, 10.0, 0.0, 0.0, 8.0]))  # State costs
-    R = np.diag(np.array([0.0000000000001,0.0000000000001, 0.0000000000001, 0.0000000000001, 0.0000000000001, 0.0000000000001]))  # Input costs
-    R = np.zeros((6,6))
+    Q = np.diag(np.array([10.0,10.0, 10.0, 0.0, 0.0, 8.0]))           # State costs
+    R = np.diag(np.array([1e-13,1e-13, 1e-13, 1e-13, 1e-13, 1e-13]))  # Input costs
 
     x_des = np.array([target[0], target[1], target[2], target[3], target[4], target[5]])
     state_diff = x_des - x
